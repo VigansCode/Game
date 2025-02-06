@@ -1,435 +1,469 @@
+use std::f64::consts::SQRT_2;
+use rand::Rng;
+use std::collections::HashMap;
+
 // Game Configuration
-const GAME_CONFIG = {
-    GRID_SIZE: 20,
-    MOVE_DISTANCE: 1,
-    WOLF_ATTACK_RANGE: 2,
-    WOLF_PACK_BONUS: 5,
-    SHEEP_HERD_BONUS: 5,
-};
+const GRID_SIZE: i32 = 20;
+const MOVE_DISTANCE: i32 = 1;
+const WOLF_ATTACK_RANGE: i32 = 2;
+const WOLF_PACK_BONUS: i32 = 5;
+const SHEEP_HERD_BONUS: i32 = 5;
 
 // Utility Functions
-const calculateDistance = (entity1, entity2) => {
-    return Math.sqrt(
-        Math.pow(entity2.x - entity1.x, 2) + 
-        Math.pow(entity2.y - entity1.y, 2)
-    );
-};
+fn calculate_distance(entity1: &Animal, entity2: &Animal) -> f64 {
+    ((entity2.x - entity1.x).pow(2) + (entity2.y - entity1.y).pow(2)) as f64
+}
 
 // Base Animal Class
-class Animal {
-    constructor(x, y, type) {
-        this.x = x;
-        this.y = y;
-        this.type = type;
-        this.health = 100;
-        this.isAlive = true;
-        this.votes = 0;
-        this.lastAction = null;
-        this.id = Math.random().toString(36).substr(2, 9);
+struct Animal {
+    x: i32,
+    y: i32,
+    animal_type: String,
+    health: i32,
+    is_alive: bool,
+    votes: i32,
+    last_action: Option<String>,
+    id: String,
+}
+
+impl Animal {
+    fn new(x: i32, y: i32, animal_type: String) -> Self {
+        Self {
+            x,
+            y,
+            animal_type,
+            health: 100,
+            is_alive: true,
+            votes: 0,
+            last_action: None,
+            id: rand::thread_rng().gen::<u64>().to_string(),
+        }
     }
 
-    move(dx, dy, gameState) {
-        const newX = this.x + dx;
-        const newY = this.y + dy;
-        
-        if (newX >= 0 && newX < GAME_CONFIG.GRID_SIZE && 
-            newY >= 0 && newY < GAME_CONFIG.GRID_SIZE) {
-            
-            const collision = gameState.animals.some(animal => 
-                animal !== this && 
-                animal.isAlive &&
-                animal.x === newX && 
-                animal.y === newY
-            );
+    fn move(&mut self, dx: i32, dy: i32, game_state: &GameState) -> bool {
+        let new_x = self.x + dx;
+        let new_y = self.y + dy;
 
-            if (!collision) {
-                this.x = newX;
-                this.y = newY;
+        if new_x >= 0 && new_x < GRID_SIZE && new_y >= 0 && new_y < GRID_SIZE {
+            let collision = game_state.animals.iter().any(|animal| {
+                animal.id != self.id && animal.is_alive && animal.x == new_x && animal.y == new_y
+            });
+
+            if !collision {
+                self.x = new_x;
+                self.y = new_y;
                 return true;
             }
         }
-        return false;
+        false
     }
 
-    takeDamage(amount) {
-        this.health = Math.max(0, this.health - amount);
-        if (this.health <= 0) {
-            this.isAlive = false;
+    fn take_damage(&mut self, amount: i32) {
+        self.health = std::cmp::max(0, self.health - amount);
+        if self.health <= 0 {
+            self.is_alive = false;
         }
     }
 
-    heal(amount) {
-        this.health = Math.min(100, this.health + amount);
+    fn heal(&mut self, amount: i32) {
+        self.health = std::cmp::min(100, self.health + amount);
     }
 
-    getNearbyAllies(gameState, range = 2) {
-        return gameState.animals.filter(animal => 
-            animal !== this &&
-            animal.type === this.type &&
-            animal.isAlive &&
-            calculateDistance(this, animal) <= range
-        );
+    fn get_nearby_allies(&self, game_state: &GameState, range: i32) -> Vec<&Animal> {
+        game_state
+            .animals
+            .iter()
+            .filter(|animal| {
+                animal.id != self.id
+                    && animal.animal_type == self.animal_type
+                    && animal.is_alive
+                    && calculate_distance(self, animal) <= range as f64
+            })
+            .collect()
     }
 }
 
 // Wolf Class
-class Wolf extends Animal {
-    constructor(x, y) {
-        super(x, y, 'wolf');
-        this.attackPower = 20;
-        this.stamina = 100;
+struct Wolf {
+    animal: Animal,
+    attack_power: i32,
+    stamina: i32,
+}
+
+impl Wolf {
+    fn new(x: i32, y: i32) -> Self {
+        Self {
+            animal: Animal::new(x, y, "wolf".to_string()),
+            attack_power: 20,
+            stamina: 100,
+        }
     }
 
-    attack(target, gameState) {
-        if (!this.isAlive || !target.isAlive || this.stamina < 20) {
-            return null;
+    fn attack(&mut self, target: &mut Animal, game_state: &GameState) -> Option<String> {
+        if !self.animal.is_alive || !target.is_alive || self.stamina < 20 {
+            return None;
         }
 
-        const distance = calculateDistance(this, target);
-        if (distance > GAME_CONFIG.WOLF_ATTACK_RANGE) {
-            return `Wolf ${this.id} is too far to attack!`;
+        let distance = calculate_distance(&self.animal, target);
+        if distance > WOLF_ATTACK_RANGE as f64 {
+            return Some(format!("Wolf {} is too far to attack!", self.animal.id));
         }
 
-        const nearbyWolves = this.getNearbyAllies(gameState);
-        const packBonus = nearbyWolves.length * GAME_CONFIG.WOLF_PACK_BONUS;
-        const totalDamage = this.attackPower + packBonus;
-        
-        target.takeDamage(totalDamage);
-        this.stamina -= 20;
-        this.lastAction = 'attack';
-        
-        return `Wolf ${this.id} attacked ${target.type} ${target.id} for ${totalDamage} damage! Target health: ${target.health}`;
+        let nearby_wolves = self.animal.get_nearby_allies(game_state, 2);
+        let pack_bonus = nearby_wolves.len() as i32 * WOLF_PACK_BONUS;
+        let total_damage = self.attack_power + pack_bonus;
+
+        target.take_damage(total_damage);
+        self.stamina -= 20;
+        self.animal.last_action = Some("attack".to_string());
+
+        Some(format!(
+            "Wolf {} attacked {} {} for {} damage! Target health: {}",
+            self.animal.id, target.animal_type, target.id, total_damage, target.health
+        ))
     }
 
-    rest() {
-        this.stamina = Math.min(100, this.stamina + 30);
-        this.lastAction = 'rest';
-        return `Wolf ${this.id} rested. Stamina restored to ${this.stamina}`;
+    fn rest(&mut self) -> String {
+        self.stamina = std::cmp::min(100, self.stamina + 30);
+        self.animal.last_action = Some("rest".to_string());
+        format!("Wolf {} rested. Stamina restored to {}", self.animal.id, self.stamina)
     }
 }
 
 // Sheep Class
-class Sheep extends Animal {
-    constructor(x, y) {
-        super(x, y, 'sheep');
-        this.defensePower = 10;
-        this.energy = 100;
+struct Sheep {
+    animal: Animal,
+    defense_power: i32,
+    energy: i32,
+}
+
+impl Sheep {
+    fn new(x: i32, y: i32) -> Self {
+        Self {
+            animal: Animal::new(x, y, "sheep".to_string()),
+            defense_power: 10,
+            energy: 100,
+        }
     }
 
-    defend(gameState) {
-        if (this.energy < 15) {
-            return null;
+    fn defend(&mut self, game_state: &GameState) -> Option<String> {
+        if self.energy < 15 {
+            return None;
         }
 
-        const nearbySheep = this.getNearbyAllies(gameState);
-        const herdBonus = nearbySheep.length * GAME_CONFIG.SHEEP_HERD_BONUS;
-        const totalDefense = this.defensePower + herdBonus;
-        
-        this.heal(totalDefense);
-        this.energy -= 15;
-        this.lastAction = 'defend';
-        
-        return `Sheep ${this.id} defended with herd bonus! Healed for ${totalDefense}. Current health: ${this.health}`;
+        let nearby_sheep = self.animal.get_nearby_allies(game_state, 2);
+        let herd_bonus = nearby_sheep.len() as i32 * SHEEP_HERD_BONUS;
+        let total_defense = self.defense_power + herd_bonus;
+
+        self.animal.heal(total_defense);
+        self.energy -= 15;
+        self.animal.last_action = Some("defend".to_string());
+
+        Some(format!(
+            "Sheep {} defended with herd bonus! Healed for {}. Current health: {}",
+            self.animal.id, total_defense, self.animal.health
+        ))
     }
 
-    flee(gameState) {
-        if (this.energy < 10) {
-            return null;
+    fn flee(&mut self, game_state: &GameState) -> Option<String> {
+        if self.energy < 10 {
+            return None;
         }
 
-        const wolves = gameState.animals.filter(a => a.type === 'wolf' && a.isAlive);
-        if (wolves.length === 0) return null;
+        let wolves: Vec<&Animal> = game_state
+            .animals
+            .iter()
+            .filter(|a| a.animal_type == "wolf" && a.is_alive)
+            .collect();
 
-        const nearestWolf = wolves.reduce((nearest, wolf) => {
-            const distance = calculateDistance(this, wolf);
-            return distance < calculateDistance(this, nearest) ? wolf : nearest;
-        });
+        if wolves.is_empty() {
+            return None;
+        }
 
-        const dx = this.x - nearestWolf.x;
-        const dy = this.y - nearestWolf.y;
-        const magnitude = Math.sqrt(dx * dx + dy * dy);
-        
-        if (magnitude !== 0) {
-            const normalizedDx = Math.round(dx / magnitude);
-            const normalizedDy = Math.round(dy / magnitude);
-            
-            if (this.move(normalizedDx, normalizedDy, gameState)) {
-                this.energy -= 10;
-                this.lastAction = 'flee';
-                return `Sheep ${this.id} fled from wolf!`;
+        let nearest_wolf = wolves
+            .iter()
+            .min_by(|a, b| {
+                calculate_distance(&self.animal, a)
+                    .partial_cmp(&calculate_distance(&self.animal, b))
+                    .unwrap()
+            })
+            .unwrap();
+
+        let dx = self.animal.x - nearest_wolf.x;
+        let dy = self.animal.y - nearest_wolf.y;
+        let magnitude = ((dx * dx + dy * dy) as f64).sqrt();
+
+        if magnitude != 0.0 {
+            let normalized_dx = (dx as f64 / magnitude).round() as i32;
+            let normalized_dy = (dy as f64 / magnitude).round() as i32;
+
+            if self.animal.move(normalized_dx, normalized_dy, game_state) {
+                self.energy -= 10;
+                self.animal.last_action = Some("flee".to_string());
+                return Some(format!("Sheep {} fled from wolf!", self.animal.id));
             }
         }
 
-        return null;
+        None
     }
 
-    rest() {
-        this.energy = Math.min(100, this.energy + 25);
-        this.lastAction = 'rest';
-        return `Sheep ${this.id} rested. Energy restored to ${this.energy}`;
+    fn rest(&mut self) -> String {
+        self.energy = std::cmp::min(100, self.energy + 25);
+        self.animal.last_action = Some("rest".to_string());
+        format!(
+            "Sheep {} rested. Energy restored to {}",
+            self.animal.id, self.energy
+        )
     }
 }
 
 // Game State Management
-class GameState {
-    constructor() {
-        this.animals = [];
-        this.votingOpen = false;
-        this.roundNumber = 1;
-        this.turnOrder = [];
-        this.battleLog = [];
-        this.votingTimeRemaining = 0;
+struct GameState {
+    animals: Vec<Animal>,
+    voting_open: bool,
+    round_number: i32,
+    turn_order: Vec<String>,
+    battle_log: Vec<Vec<String>>,
+    voting_time_remaining: i32,
+}
+
+impl GameState {
+    fn new() -> Self {
+        Self {
+            animals: Vec::new(),
+            voting_open: false,
+            round_number: 1,
+            turn_order: Vec::new(),
+            battle_log: Vec::new(),
+            voting_time_remaining: 0,
+        }
     }
 
-    addAnimal(animal) {
-        this.animals.push(animal);
-        this.updateTurnOrder();
+    fn add_animal(&mut self, animal: Animal) {
+        self.animals.push(animal);
+        self.update_turn_order();
     }
 
-    updateTurnOrder() {
-        this.turnOrder = [...this.animals]
-            .filter(animal => animal.isAlive)
-            .sort(() => Math.random() - 0.5);
+    fn update_turn_order(&mut self) {
+        self.turn_order = self
+            .animals
+            .iter()
+            .filter(|animal| animal.is_alive)
+            .map(|animal| animal.id.clone())
+            .collect();
+        self.turn_order.sort_by(|_, _| rand::thread_rng().gen::<bool>().cmp(&false));
     }
 
-    startVoting(votingDuration = 30) {
-        this.votingOpen = true;
-        this.votingTimeRemaining = votingDuration;
-        this.animals.forEach(animal => animal.votes = 0);
+    fn start_voting(&mut self, voting_duration: i32) {
+        self.voting_open = true;
+        self.voting_time_remaining = voting_duration;
+        for animal in &mut self.animals {
+            animal.votes = 0;
+        }
     }
 
-    castVote(targetAnimalId) {
-        if (!this.votingOpen) return false;
-        
-        const target = this.animals.find(a => a.id === targetAnimalId);
-        if (target && target.isAlive) {
-            target.votes++;
+    fn cast_vote(&mut self, target_animal_id: &str) -> bool {
+        if !self.voting_open {
+            return false;
+        }
+
+        if let Some(target) = self.animals.iter_mut().find(|a| a.id == target_animal_id && a.is_alive) {
+            target.votes += 1;
             return true;
         }
-        return false;
+        false
     }
 
-    endVoting() {
-        this.votingOpen = false;
-        const livingAnimals = this.animals.filter(a => a.isAlive);
-        const winner = livingAnimals.reduce((prev, current) => 
-            (prev.votes > current.votes) ? prev : current
-        );
-        
+    fn end_voting(&mut self) -> (Animal, Vec<(String, String, i32)>) {
+        self.voting_open = false;
+        let living_animals: Vec<&Animal> = self.animals.iter().filter(|a| a.is_alive).collect();
+        let winner = living_animals
+            .iter()
+            .max_by_key(|a| a.votes)
+            .unwrap()
+            .clone();
+
         winner.heal(20);
-        
-        return {
-            winner,
-            voteCounts: livingAnimals.map(a => ({
-                id: a.id,
-                type: a.type,
-                votes: a.votes
-            }))
-        };
+
+        let vote_counts = living_animals
+            .iter()
+            .map(|a| (a.id.clone(), a.animal_type.clone(), a.votes))
+            .collect();
+
+        (winner.clone(), vote_counts)
     }
 
-    checkGameOver() {
-        const wolves = this.animals.filter(a => a.type === 'wolf' && a.isAlive);
-        const sheep = this.animals.filter(a => a.type === 'sheep' && a.isAlive);
-        
-        if (wolves.length === 0) return 'Sheep Win!';
-        if (sheep.length === 0) return 'Wolves Win!';
-        return null;
+    fn check_game_over(&self) -> Option<String> {
+        let wolves = self.animals.iter().filter(|a| a.animal_type == "wolf" && a.is_alive).count();
+        let sheep = self.animals.iter().filter(|a| a.animal_type == "sheep" && a.is_alive).count();
+
+        if wolves == 0 {
+            Some("Sheep Win!".to_string())
+        } else if sheep == 0 {
+            Some("Wolves Win!".to_string())
+        } else {
+            None
+        }
     }
 
-    getGameStatus() {
-        return {
-            round: this.roundNumber,
-            votingOpen: this.votingOpen,
-            votingTimeRemaining: this.votingTimeRemaining,
-            animals: this.animals.map(a => ({
-                id: a.id,
-                type: a.type,
-                health: a.health,
-                isAlive: a.isAlive,
-                position: { x: a.x, y: a.y },
-                lastAction: a.lastAction,
-                votes: a.votes
-            }))
-        };
+    fn get_game_status(&self) -> HashMap<String, String> {
+        let mut status = HashMap::new();
+        status.insert("round".to_string(), self.round_number.to_string());
+        status.insert("voting_open".to_string(), self.voting_open.to_string());
+        status.insert(
+            "voting_time_remaining".to_string(),
+            self.voting_time_remaining.to_string(),
+        );
+        for animal in &self.animals {
+            status.insert(
+                format!("animal_{}_id", animal.id),
+                animal.id.clone(),
+            );
+            status.insert(
+                format!("animal_{}_type", animal.id),
+                animal.animal_type.clone(),
+            );
+            status.insert(
+                format!("animal_{}_health", animal.id),
+                animal.health.to_string(),
+            );
+            status.insert(
+                format!("animal_{}_is_alive", animal.id),
+                animal.is_alive.to_string(),
+            );
+            status.insert(
+                format!("animal_{}_position_x", animal.id),
+                animal.x.to_string(),
+            );
+            status.insert(
+                format!("animal_{}_position_y", animal.id),
+                animal.y.to_string(),
+            );
+            status.insert(
+                format!("animal_{}_last_action", animal.id),
+                animal.last_action.clone().unwrap_or("None".to_string()),
+            );
+            status.insert(
+                format!("animal_{}_votes", animal.id),
+                animal.votes.to_string(),
+            );
+        }
+        status
     }
 }
 
 // Battle System
-class BattleSystem {
-    constructor(gameState) {
-        this.gameState = gameState;
+struct BattleSystem {
+    game_state: GameState,
+}
+
+impl BattleSystem {
+    fn new(game_state: GameState) -> Self {
+        Self { game_state }
     }
 
-    initializeBattle(numWolves, numSheep) {
-        this.gameState.animals = [];
-        
+    fn initialize_battle(&mut self, num_wolves: i32, num_sheep: i32) {
+        self.game_state.animals.clear();
+
         // Add wolves
-        for (let i = 0; i < numWolves; i++) {
-            this.gameState.addAnimal(new Wolf(
-                Math.floor(Math.random() * GAME_CONFIG.GRID_SIZE),
-                Math.floor(Math.random() * GAME_CONFIG.GRID_SIZE)
+        for _ in 0..num_wolves {
+            self.game_state.add_animal(Animal::new(
+                rand::thread_rng().gen_range(0..GRID_SIZE),
+                rand::thread_rng().gen_range(0..GRID_SIZE),
+                "wolf".to_string(),
             ));
         }
-        
+
         // Add sheep
-        for (let i = 0; i < numSheep; i++) {
-            this.gameState.addAnimal(new Sheep(
-                Math.floor(Math.random() * GAME_CONFIG.GRID_SIZE),
-                Math.floor(Math.random() * GAME_CONFIG.GRID_SIZE)
+        for _ in 0..num_sheep {
+            self.game_state.add_animal(Animal::new(
+                rand::thread_rng().gen_range(0..GRID_SIZE),
+                rand::thread_rng().gen_range(0..GRID_SIZE),
+                "sheep".to_string(),
             ));
         }
     }
 
-    executeRound() {
-        const messages = [];
-        this.gameState.updateTurnOrder();
+    fn execute_round(&mut self) -> Vec<String> {
+        let mut messages = Vec::new();
+        self.game_state.update_turn_order();
 
-        // Execute turns in random order
-        for (const animal of this.gameState.turnOrder) {
-            if (!animal.isAlive) continue;
+        for animal_id in &self.game_state.turn_order {
+            if let Some(animal) = self.game_state.animals.iter_mut().find(|a| a.id == *animal_id && a.is_alive) {
+                if animal.animal_type == "wolf" {
+                    // Wolf AI
+                    let targets: Vec<&Animal> = self
+                        .game_state
+                        .animals
+                        .iter()
+                        .filter(|a| a.animal_type == "sheep" && a.is_alive)
+                        .collect();
 
-            if (animal.type === 'wolf') {
-                // Wolf AI
-                const targets = this.gameState.animals.filter(a => 
-                    a.type === 'sheep' && a.isAlive
-                );
+                    if !targets.is_empty() {
+                        let nearest_sheep = targets
+                            .iter()
+                            .min_by(|a, b| {
+                                calculate_distance(animal, a)
+                                    .partial_cmp(&calculate_distance(animal, b))
+                                    .unwrap()
+                            })
+                            .unwrap();
 
-                if (targets.length > 0) {
-                    const nearestSheep = targets.reduce((nearest, sheep) => {
-                        const distance = calculateDistance(animal, sheep);
-                        return distance < calculateDistance(animal, nearest) ? sheep : nearest;
-                    });
+                        let distance = calculate_distance(animal, nearest_sheep);
 
-                    const distance = calculateDistance(animal, nearestSheep);
-
-                    if (distance <= GAME_CONFIG.WOLF_ATTACK_RANGE) {
-                        const attackMessage = animal.attack(nearestSheep, this.gameState);
-                        if (attackMessage) messages.push(attackMessage);
-                    } else {
-                        const dx = Math.sign(nearestSheep.x - animal.x);
-                        const dy = Math.sign(nearestSheep.y - animal.y);
-                        if (animal.move(dx, dy, this.gameState)) {
-                            messages.push(`Wolf ${animal.id} moved toward sheep`);
+                        if distance <= WOLF_ATTACK_RANGE as f64 {
+                            if let Some(message) = Wolf::attack(&mut Wolf::new(animal.x, animal.y), &mut nearest_sheep.clone(), &self.game_state) {
+                                messages.push(message);
+                            }
+                        } else {
+                            let dx = (nearest_sheep.x - animal.x).signum();
+                            let dy = (nearest_sheep.y - animal.y).signum();
+                            if animal.move(dx, dy, &self.game_state) {
+                                messages.push(format!("Wolf {} moved toward sheep", animal.id));
+                            }
                         }
                     }
-                }
-            } else {
-                // Sheep AI
-                const nearbyWolves = this.gameState.animals.filter(a => 
-                    a.type === 'wolf' && 
-                    a.isAlive && 
-                    calculateDistance(animal, a) <= GAME_CONFIG.WOLF_ATTACK_RANGE + 1
-                );
-
-                if (nearbyWolves.length > 0) {
-                    const fleeMessage = animal.flee(this.gameState);
-                    if (fleeMessage) {
-                        messages.push(fleeMessage);
-                    } else {
-                        const defendMessage = animal.defend(this.gameState);
-                        if (defendMessage) messages.push(defendMessage);
-                    }
                 } else {
-                    messages.push(animal.rest());
+                    // Sheep AI
+                    let nearby_wolves: Vec<&Animal> = self
+                        .game_state
+                        .animals
+                        .iter()
+                        .filter(|a| {
+                            a.animal_type == "wolf"
+                                && a.is_alive
+                                && calculate_distance(animal, a) <= (WOLF_ATTACK_RANGE + 1) as f64
+                        })
+                        .collect();
+
+                    if !nearby_wolves.is_empty() {
+                        if let Some(message) = Sheep::flee(&mut Sheep::new(animal.x, animal.y), &self.game_state) {
+                            messages.push(message);
+                        } else if let Some(message) = Sheep::defend(&mut Sheep::new(animal.x, animal.y), &self.game_state) {
+                            messages.push(message);
+                        }
+                    } else {
+                        messages.push(Sheep::rest(&mut Sheep::new(animal.x, animal.y)));
+                    }
                 }
             }
         }
 
-        this.gameState.roundNumber++;
-        this.gameState.battleLog.push(messages);
-        return messages;
+        self.game_state.round_number += 1;
+        self.game_state.battle_log.push(messages.clone());
+        messages
     }
 }
 
-// Initialize game and UI setup
-document.addEventListener('DOMContentLoaded', () => {
-    const gameState = new GameState();
-    const battleSystem = new BattleSystem(gameState);
-    let gameBoard;
+fn main() {
+    let mut game_state = GameState::new();
+    let mut battle_system = BattleSystem::new(game_state);
+    battle_system.initialize_battle(3, 5);
 
-    function initializeGameBoard() {
-        const board = document.getElementById('gameBoard');
-        board.style.gridTemplateColumns = `repeat(${GAME_CONFIG.GRID_SIZE}, 30px)`;
-        board.innerHTML = '';
-
-        for (let y = 0; y < GAME_CONFIG.GRID_SIZE; y++) {
-            for (let x = 0; x < GAME_CONFIG.GRID_SIZE; x++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.x = x;
-                cell.dataset.y = y;
-                board.appendChild(cell);
-            }
+    for _ in 0..10 {
+        let messages = battle_system.execute_round();
+        for message in messages {
+            println!("{}", message);
         }
-        gameBoard = board;
     }
-
-    function updateGameBoard() {
-        // Clear all cells
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.textContent = '';
-            cell.className = 'cell';
-        });
-
-        // Update cells with animals
-        gameState.animals.forEach(animal => {
-            if (animal.isAlive) {
-                const cell = gameBoard.children[animal.y * GAME_CONFIG.GRID_SIZE + animal.x];
-                cell.textContent = animal.type === 'wolf' ? '🐺' : '🐑';
-                cell.classList.add(animal.type);
-            }
-        });
-    }
-
-    function updateBattleLog(messages) {
-        const battleLog = document.getElementById('battleLog');
-        messages.forEach(message => {
-            const messageElement = document.createElement('div');
-            messageElement.textContent = message;
-            battleLog.appendChild(messageElement);
-        });
-        battleLog.scrollTop = battleLog.scrollHeight;
-    }
-
-    function updateAnimalStats() {
-        const statsContainer = document.getElementById('animalStats');
-        statsContainer.innerHTML = '';
-
-        gameState.animals.forEach(animal => {
-            if (animal.isAlive) {
-                const card = document.createElement('div');
-                card.className = 'animal-card';
-                card.innerHTML = `
-                    <strong>${animal.type} ${animal.id}</strong><br>
-                    Health: ${animal.health}<br>
-                    ${animal.type === 'wolf' ? `Stamina: ${animal.stamina}` : `Energy: ${animal.energy}`}<br>
-                    Last Action: ${animal.lastAction || 'None'}<br>
-                    Votes: ${animal.votes}
-                `;
-                statsContainer.appendChild(card);
-            }
-        });
-    }
-
-    function showVotingOptions() {
-        const votingSection = document.getElementById('votingSection');
-        const votingOptions = document.getElementById('votingOptions');
-        votingSection.style.display = 'block';
-        votingOptions.innerHTML = '';
-
-        gameState.animals
-            .filter(animal => animal.isAlive)
-            .forEach(animal => {
-                const button = document.createElement('button');
-                button.textContent = `Vote for ${animal.type} ${animal.id}`;
-                button.onclick = () => {
-                    gameState.castVote(animal.id);
-                    updateAnimalStats();
-                };
-                votingOptions.appendChild(button);
-            });
-    }
-
-    // Button Event Listeners
-    document.getElementById('startGame').addEventListener('
+}
