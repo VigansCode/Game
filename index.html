@@ -27,7 +27,6 @@
             background-size: 128px 768px;
             image-rendering: pixelated;
             z-index: 1000;
-            transition: left 0.5s linear, top 0.5s linear;
             border: 1px solid red;
             transform-origin: top left;
         }
@@ -38,6 +37,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
+            transform-origin: 0 0;
         }
         #minimap-container {
             position: fixed;
@@ -135,9 +135,8 @@
             setPosition(x, y) {
                 this.x = x;
                 this.y = y;
-                this.element.style.left = `${x * currentZoom}px`;
-                this.element.style.top = `${y * currentZoom}px`;
-                this.element.style.transform = `scale(${currentZoom})`;
+                this.element.style.left = `${x}px`;
+                this.element.style.top = `${y}px`;
             }
 
             playAnimation(animationName) {
@@ -149,7 +148,6 @@
                     const row = Math.floor(frameIndex / 4);
                     
                     this.element.style.backgroundPosition = `-${col * 32}px -${row * 32}px`;
-                    console.log(`Sprite at (${this.x}, ${this.y}), Frame: ${frameIndex}, Position: -${col * 32}px -${row * 32}px`);
                 }
             }
 
@@ -173,17 +171,17 @@
             const spriteLayer = document.getElementById('spriteLayer');
             const mapCanvas = document.getElementById('mapCanvas');
             
-            console.log('Canvas dimensions:', mapCanvas.width, mapCanvas.height);
-            
-            const sheep1 = new Sprite(800, 800, 'wolf_spritesheet.png');
+            // Position in grass area
+            const sheep1 = new Sprite(300, 400, 'wolf_spritesheet.png');
             spriteLayer.appendChild(sheep1.element);
             sprites.set('sheep1', sheep1);
-            console.log('Sheep 1 created at:', sheep1.x, sheep1.y);
             
-            const sheep2 = new Sprite(1000, 800, 'wolf_spritesheet.png');
+            const sheep2 = new Sprite(400, 400, 'wolf_spritesheet.png');
             spriteLayer.appendChild(sheep2.element);
             sprites.set('sheep2', sheep2);
-            console.log('Sheep 2 created at:', sheep2.x, sheep2.y);
+
+            // Scale spriteLayer with zoom
+            spriteLayer.style.transform = `scale(${currentZoom})`;
 
             setInterval(() => {
                 sprites.forEach(sprite => {
@@ -223,6 +221,7 @@
             e.preventDefault();
             const container = document.getElementById('gameContainer');
             const canvas = document.getElementById('mapCanvas');
+            const spriteLayer = document.getElementById('spriteLayer');
             
             const rect = container.getBoundingClientRect();
             const mouseX = e.clientX - rect.left + container.scrollLeft;
@@ -237,14 +236,11 @@
                 const newScrollTop = mouseY * scaleFactor - (e.clientY - rect.top);
                 
                 canvas.style.transform = `scale(${newZoom})`;
+                spriteLayer.style.transform = `scale(${newZoom})`;
                 container.scrollLeft = newScrollLeft;
                 container.scrollTop = newScrollTop;
                 
                 currentZoom = newZoom;
-                // Update all sprite positions
-                sprites.forEach(sprite => {
-                    sprite.setPosition(sprite.x, sprite.y);
-                });
                 updatePlayerPosition();
             }
         }
