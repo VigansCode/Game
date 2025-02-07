@@ -173,16 +173,20 @@
 
         function initSprites() {
             const spriteLayer = document.getElementById('spriteLayer');
+            const mapCanvas = document.getElementById('mapCanvas');
             
-            const sheep1 = new Sprite(400, 400, 'wolf_spritesheet.png');
+            // Calculate center positions
+            const centerX = mapCanvas.width / 2;
+            const centerY = mapCanvas.height / 2;
+            
+            const sheep1 = new Sprite(centerX - 100, centerY, 'wolf_spritesheet.png');
             spriteLayer.appendChild(sheep1.element);
             sprites.set('sheep1', sheep1);
             
-            const sheep2 = new Sprite(500, 400, 'wolf_spritesheet.png');
+            const sheep2 = new Sprite(centerX + 100, centerY, 'wolf_spritesheet.png');
             spriteLayer.appendChild(sheep2.element);
             sprites.set('sheep2', sheep2);
-
-            // Start game loop
+            
             setInterval(() => {
                 sprites.forEach(sprite => {
                     sprite.playAnimation('walk');
