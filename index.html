@@ -163,19 +163,19 @@
                 this.element.style.top = `${y}px`;
             }
 
-            moveToward(targetX, targetY, shouldRetreat = false) {
+            moveToward(targetX, targetY) {
                 const dx = targetX - this.x;
                 const dy = targetY - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 if (distance > 0) {
-                    const speed = shouldRetreat ? 8 : 2; // Much faster retreat speed
-                    const direction = shouldRetreat ? -1 : 1;
-                    const normalizedDx = direction * (dx / distance) * speed;
-                    const normalizedDy = direction * (dy / distance) * speed;
+                    const speed = 2;
+                    const normalizedDx = (dx / distance) * speed;
+                    const normalizedDy = (dy / distance) * speed;
                     this.setPosition(this.x + normalizedDx, this.y + normalizedDy);
                 }
             }
+
             takeDamage(amount) {
                 this.health = Math.max(0, this.health - amount);
                 this.healthBarFill.style.width = `${this.health}%`;
@@ -199,6 +199,7 @@
                     this.isHeadbutting = true;
                     this.playAnimation('headbutt');
                     
+                    // Deal damage
                     const damage = Math.random() * 10 + 5; // Random damage between 5-15
                     otherSprite.takeDamage(damage);
                     
@@ -239,46 +240,45 @@
         const MAX_ZOOM = 4;
         const ZOOM_SPEED = 0.1;
 
-        setInterval(() => {
-    const sheepArray = Array.from(sprites.values());
-    const sheep1 = sheepArray[0];
-    const sheep2 = sheepArray[1];
-    
-    if (sheep1.health > 0 && sheep2.health > 0) {
-        const healthDifference = Math.abs(sheep1.health - sheep2.health);
-        
-        if (healthDifference > 30) {  // Only retreat after significant damage
-            // Determine loser and make them retreat
-            if (sheep1.health < sheep2.health) {
-                sheep1.moveToward(sheep2.x - 500, sheep2.y - 500, true); // Retreat diagonally left and up
-                sheep2.playAnimation('idle');
-            } else {
-                sheep2.moveToward(sheep1.x + 500, sheep1.y + 500, true); // Retreat diagonally right and down
-                sheep1.playAnimation('idle');
-            }
-        } else {
-            // Keep fighting in center
-            sheep1.moveToward(sheep2.x, sheep2.y, false);
-            sheep2.moveToward(sheep1.x, sheep1.y, false);
+        function initSprites() {
+            const spriteLayer = document.getElementById('spriteLayer');
+            const mapCanvas = document.getElementById('mapCanvas');
+            
+            const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
+            spriteLayer.appendChild(sheep1.element);
+            sprites.set('sheep1', sheep1);
+            
+            const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
+            spriteLayer.appendChild(sheep2.element);
+            sprites.set('sheep2', sheep2);
+
+            spriteLayer.style.transform = `scale(${currentZoom})`;
+
+            setInterval(() => {
+                const sheepArray = Array.from(sprites.values());
+                
+                // Move sheep toward each other if both are alive
+                if (sheepArray[0].health > 0 && sheepArray[1].health > 0) {
+                    sheepArray[0].moveToward(sheepArray[1].x, sheepArray[1].y);
+                    sheepArray[1].moveToward(sheepArray[0].x, sheepArray[0].y);
+                }
+                
+                // Check for collisions and trigger headbutt
+                sheepArray.forEach(sheep => {
+                    sheepArray.forEach(otherSheep => {
+                        if (sheep !== otherSheep && 
+                            sheep.checkCollision(otherSheep) && 
+                            sheep.health > 0 && 
+                            otherSheep.health > 0) {
+                            sheep.performHeadbutt(otherSheep);
+                        } else if (!sheep.isHeadbutting && sheep.health > 0) {
+                            sheep.playAnimation('walk');
+                        }
+                    });
+                    sheep.update();
+                });
+            }, 50);
         }
-    }
-    
-    // Collision and headbutt checks
-    sheepArray.forEach(sheep => {
-        sheepArray.forEach(otherSheep => {
-            if (sheep !== otherSheep && 
-                sheep.checkCollision(otherSheep) && 
-                sheep.health > 0 && 
-                otherSheep.health > 0 &&
-                Math.abs(sheep1.health - sheep2.health) <= 30) {  // Only headbutt during close fight
-                sheep.performHeadbutt(otherSheep);
-            } else if (!sheep.isHeadbutting && sheep.health > 0) {
-                sheep.playAnimation('walk');
-            }
-        });
-        sheep.update();
-    });
-}, 50);
 
         function handleMouseDown(e) {
             isDragging = true;
