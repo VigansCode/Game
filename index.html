@@ -29,6 +29,20 @@
             border: 1px solid red;
             transform-origin: top left;
         }
+        .health-bar {
+            position: absolute;
+            width: 32px;
+            height: 4px;
+            background: #333;
+            top: -8px;
+            left: 0;
+        }
+        .health-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: #2ecc71;
+            transition: width 0.2s ease-in-out;
+        }
         #spriteLayer {
             position: absolute;
             top: 0;
@@ -117,14 +131,23 @@
             constructor(x, y, spritesheet) {
                 this.x = x;
                 this.y = y;
+                this.health = 100;
                 this.element = document.createElement('div');
                 this.element.className = 'sprite';
                 this.element.style.backgroundImage = `url(${spritesheet})`;
                 
+                // Create health bar
+                this.healthBarContainer = document.createElement('div');
+                this.healthBarContainer.className = 'health-bar';
+                this.healthBarFill = document.createElement('div');
+                this.healthBarFill.className = 'health-bar-fill';
+                this.healthBarContainer.appendChild(this.healthBarFill);
+                this.element.appendChild(this.healthBarContainer);
+                
                 this.animations = {
                     idle: { startFrame: 0, frames: 4 },
                     walk: { startFrame: 4, frames: 4 },
-                    headbutt: { startFrame: 8, frames: 4 }  // Added headbutt animation
+                    headbutt: { startFrame: 8, frames: 4 }
                 };
                 
                 this.currentFrame = 0;
@@ -153,28 +176,44 @@
                 }
             }
 
+            takeDamage(amount) {
+                this.health = Math.max(0, this.health - amount);
+                this.healthBarFill.style.width = `${this.health}%`;
+                
+                if (this.health <= 0) {
+                    this.playAnimation('idle');
+                    this.element.style.opacity = '0.5';
+                }
+            }
+
             checkCollision(otherSprite) {
                 const distance = Math.sqrt(
                     Math.pow(this.x - otherSprite.x, 2) + 
                     Math.pow(this.y - otherSprite.y, 2)
                 );
-                return distance < 32;  // Collision distance in pixels
+                return distance < 32;
             }
 
-            performHeadbutt() {
-                if (!this.isHeadbutting) {
+            performHeadbutt(otherSprite) {
+                if (!this.isHeadbutting && this.health > 0) {
                     this.isHeadbutting = true;
                     this.playAnimation('headbutt');
                     
+                    // Deal damage
+                    const damage = Math.random() * 10 + 5; // Random damage between 5-15
+                    otherSprite.takeDamage(damage);
+                    
                     setTimeout(() => {
                         this.isHeadbutting = false;
-                        this.playAnimation('idle');
+                        if (this.health > 0) {
+                            this.playAnimation('idle');
+                        }
                     }, 400);
                 }
             }
 
             playAnimation(animationName) {
-                if (this.animations[animationName] && !this.isHeadbutting) {
+                if (this.animations[animationName] && (!this.isHeadbutting || animationName === 'headbutt')) {
                     this.currentAnimation = animationName;
                     const animation = this.animations[animationName];
                     const frameIndex = animation.startFrame + (this.currentFrame % animation.frames);
@@ -187,9 +226,7 @@
 
             update() {
                 this.currentFrame++;
-                if (!this.isHeadbutting) {
-                    this.playAnimation(this.currentAnimation);
-                }
+                this.playAnimation(this.currentAnimation);
             }
         }
 
@@ -208,29 +245,33 @@
             const mapCanvas = document.getElementById('mapCanvas');
             
             const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
-            const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
-            
             spriteLayer.appendChild(sheep1.element);
-            spriteLayer.appendChild(sheep2.element);
             sprites.set('sheep1', sheep1);
+            
+            const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
+            spriteLayer.appendChild(sheep2.element);
             sprites.set('sheep2', sheep2);
-         
+
             spriteLayer.style.transform = `scale(${currentZoom})`;
-         
-            // Add movement and collision detection
+
             setInterval(() => {
                 const sheepArray = Array.from(sprites.values());
                 
-                // Move sheep toward each other
-                sheepArray[0].moveToward(sheepArray[1].x, sheepArray[1].y);
-                sheepArray[1].moveToward(sheepArray[0].x, sheepArray[0].y);
+                // Move sheep toward each other if both are alive
+                if (sheepArray[0].health > 0 && sheepArray[1].health > 0) {
+                    sheepArray[0].moveToward(sheepArray[1].x, sheepArray[1].y);
+                    sheepArray[1].moveToward(sheepArray[0].x, sheepArray[0].y);
+                }
                 
                 // Check for collisions and trigger headbutt
                 sheepArray.forEach(sheep => {
                     sheepArray.forEach(otherSheep => {
-                        if (sheep !== otherSheep && sheep.checkCollision(otherSheep)) {
-                            sheep.performHeadbutt();
-                        } else if (!sheep.isHeadbutting) {
+                        if (sheep !== otherSheep && 
+                            sheep.checkCollision(otherSheep) && 
+                            sheep.health > 0 && 
+                            otherSheep.health > 0) {
+                            sheep.performHeadbutt(otherSheep);
+                        } else if (!sheep.isHeadbutting && sheep.health > 0) {
                             sheep.playAnimation('walk');
                         }
                     });
