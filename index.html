@@ -1,29 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wolf vs Sheep Battle</title>
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100vh;
-            overflow: hidden;
-        }
-
+        body { margin: 0; padding: 0; overflow: hidden; }
         #gameContainer {
+            position: relative;
             width: 100vw;
             height: 100vh;
-            overflow: hidden;
+            overflow: auto;
+            background: #000;
             cursor: grab;
         }
-
+        #gameContainer:active { cursor: grabbing; }
         #mapCanvas {
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
             image-rendering: pixelated;
+            transform-origin: 0 0;
+            transition: transform 0.1s;
         }
-
+        .sprite {
+            width: 32px;
+            height: 32px;
+            position: absolute;
+            background-size: 128px 768px;
+            image-rendering: pixelated;
+            z-index: 1000;
+            border: 1px solid red;
+            transform-origin: top left;
+        }
+        #spriteLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            transform-origin: 0 0;
+        }
         #minimap-container {
             position: fixed;
             bottom: 20px;
@@ -34,20 +49,14 @@
             z-index: 2000;
             width: 150px;
         }
-
         #minimap {
             width: 150px;
             height: 150px;
+            border: 2px solid #333;
             position: relative;
             overflow: hidden;
         }
-
-        #minimap-canvas {
-            width: 100%;
-            height: 100%;
-            image-rendering: pixelated;
-        }
-
+        #minimap-canvas { width: 100%; height: 100%; image-rendering: pixelated; }
         .nav-buttons {
             position: absolute;
             top: 0;
@@ -60,18 +69,16 @@
             padding: 10px;
             box-sizing: border-box;
         }
-
         .nav-btn {
             width: 35px;
             height: 35px;
             font-size: 18px;
             background: rgba(0, 0, 0, 0.7);
             color: white;
-            border: none;
+            border: 2px solid #555;
             border-radius: 4px;
             cursor: pointer;
         }
-
         #player-position {
             width: 6px;
             height: 6px;
@@ -86,6 +93,7 @@
 <body>
     <div id="gameContainer">
         <canvas id="mapCanvas"></canvas>
+        <div id="spriteLayer"></div>
     </div>
     <div id="minimap-container">
         <div id="minimap">
@@ -106,29 +114,100 @@
     </div>
 
     <script>
-        let currentZoom = 1;
-        const MIN_ZOOM = 0.5;
+        class Sprite {
+            constructor(x, y, spritesheet) {
+                this.x = x;
+                this.y = y;
+                this.element = document.createElement('div');
+                this.element.className = 'sprite';
+                this.element.style.backgroundImage = `url(${spritesheet})`;
+                
+                this.animations = {
+                    idle: { startFrame: 0, frames: 4 },
+                    walk: { startFrame: 4, frames: 4 }
+                };
+                
+                this.currentFrame = 0;
+                this.currentAnimation = 'idle';
+                this.setPosition(x, y);
+            }
+
+            setPosition(x, y) {
+                this.x = x;
+                this.y = y;
+                this.element.style.left = `${x}px`;
+                this.element.style.top = `${y}px`;
+            }
+
+            playAnimation(animationName) {
+                if (this.animations[animationName]) {
+                    this.currentAnimation = animationName;
+                    const animation = this.animations[animationName];
+                    const frameIndex = animation.startFrame + (this.currentFrame % animation.frames);
+                    const col = frameIndex % 4;
+                    const row = Math.floor(frameIndex / 4);
+                    
+                    this.element.style.backgroundPosition = `-${col * 32}px -${row * 32}px`;
+                }
+            }
+
+            update() {
+                this.currentFrame++;
+                this.playAnimation(this.currentAnimation);
+            }
+        }
+
+        let gameState = null;
+        let sprites = new Map();
+        const MOVE_AMOUNT = 50;
+        let isDragging = false;
+        let startX, startY, scrollLeft, scrollTop;
+        let currentZoom = 2;
+        const MIN_ZOOM = 2;
         const MAX_ZOOM = 4;
         const ZOOM_SPEED = 0.1;
-        let isDragging = false;
-        let startX, startY;
-        let initialX, initialY;
+
+        function initSprites() {
+            const spriteLayer = document.getElementById('spriteLayer');
+            const mapCanvas = document.getElementById('mapCanvas');
+            
+            const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
+            const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
+            
+            spriteLayer.appendChild(sheep1.element);
+            spriteLayer.appendChild(sheep2.element);
+            sprites.set('sheep1', sheep1);
+            sprites.set('sheep2', sheep2);
+         
+            spriteLayer.style.transform = `scale(${currentZoom})`;
+         
+            setInterval(() => {
+                sprites.forEach(sprite => {
+                    sprite.playAnimation('walk');
+                    sprite.update();
+                });
+            }, 300);
+         }
 
         function handleMouseDown(e) {
             isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            const transform = new DOMMatrix(getComputedStyle(canvas).transform);
-            initialX = transform.e;
-            initialY = transform.f;
+            const container = document.getElementById('gameContainer');
+            startX = e.pageX - container.offsetLeft;
+            startY = e.pageY - container.offsetTop;
+            scrollLeft = container.scrollLeft;
+            scrollTop = container.scrollTop;
         }
 
         function handleMouseMove(e) {
             if (!isDragging) return;
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
-            const canvas = document.getElementById('mapCanvas');
-            canvas.style.transform = `matrix(${currentZoom}, 0, 0, ${currentZoom}, ${initialX + deltaX}, ${initialY + deltaY})`;
+            e.preventDefault();
+            const container = document.getElementById('gameContainer');
+            const x = e.pageX - container.offsetLeft;
+            const y = e.pageY - container.offsetTop;
+            const moveX = x - startX;
+            const moveY = y - startY;
+            container.scrollLeft = scrollLeft - moveX;
+            container.scrollTop = scrollTop - moveY;
             updatePlayerPosition();
         }
 
@@ -138,37 +217,45 @@
 
         function handleWheel(e) {
             e.preventDefault();
+            const container = document.getElementById('gameContainer');
             const canvas = document.getElementById('mapCanvas');
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            const spriteLayer = document.getElementById('spriteLayer');
             
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left + container.scrollLeft;
+            const mouseY = e.clientY - rect.top + container.scrollTop;
+
             const zoomDelta = -Math.sign(e.deltaY) * ZOOM_SPEED;
             const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + zoomDelta));
             
             if (newZoom !== currentZoom) {
-                const transform = new DOMMatrix(getComputedStyle(canvas).transform);
                 const scaleFactor = newZoom / currentZoom;
-                const newX = mouseX - (mouseX - transform.e) * scaleFactor;
-                const newY = mouseY - (mouseY - transform.f) * scaleFactor;
+                const newScrollLeft = mouseX * scaleFactor - (e.clientX - rect.left);
+                const newScrollTop = mouseY * scaleFactor - (e.clientY - rect.top);
                 
-                canvas.style.transform = `matrix(${newZoom}, 0, 0, ${newZoom}, ${newX}, ${newY})`;
+                canvas.style.transform = `scale(${newZoom})`;
+                spriteLayer.style.transform = `scale(${newZoom})`;
+                container.scrollLeft = newScrollLeft;
+                container.scrollTop = newScrollTop;
+                
                 currentZoom = newZoom;
                 updatePlayerPosition();
             }
         }
 
-        function loadMap() {
+        async function loadMap() {
             const canvas = document.getElementById('mapCanvas');
             const ctx = canvas.getContext('2d');
             ctx.imageSmoothingEnabled = false;
             
             const img = new Image();
             img.onload = () => {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
                 initMinimap();
+                canvas.style.transform = `scale(${currentZoom})`;
+                initSprites();
             };
             img.src = 'Wolf.png';
         }
@@ -189,51 +276,43 @@
         }
 
         function moveMap(direction) {
-            const MOVE_AMOUNT = 50;
-            const canvas = document.getElementById('mapCanvas');
-            const transform = new DOMMatrix(getComputedStyle(canvas).transform);
-            let deltaX = 0;
-            let deltaY = 0;
-
+            const container = document.getElementById('gameContainer');
             switch(direction) {
-                case 'up': deltaY = MOVE_AMOUNT; break;
-                case 'down': deltaY = -MOVE_AMOUNT; break;
-                case 'left': deltaX = MOVE_AMOUNT; break;
-                case 'right': deltaX = -MOVE_AMOUNT; break;
+                case 'up': container.scrollBy(0, -MOVE_AMOUNT); break;
+                case 'down': container.scrollBy(0, MOVE_AMOUNT); break;
+                case 'left': container.scrollBy(-MOVE_AMOUNT, 0); break;
+                case 'right': container.scrollBy(MOVE_AMOUNT, 0); break;
             }
-
-            canvas.style.transform = `matrix(${currentZoom}, 0, 0, ${currentZoom}, ${transform.e + deltaX}, ${transform.f + deltaY})`;
             updatePlayerPosition();
         }
 
         function updatePlayerPosition() {
-            const canvas = document.getElementById('mapCanvas');
+            const container = document.getElementById('gameContainer');
             const minimap = document.getElementById('minimap');
             const playerPosition = document.getElementById('player-position');
-            const transform = new DOMMatrix(getComputedStyle(canvas).transform);
             
-            const viewportCenterX = window.innerWidth / 2;
-            const viewportCenterY = window.innerHeight / 2;
-            
-            const worldX = (viewportCenterX - transform.e) / currentZoom;
-            const worldY = (viewportCenterY - transform.f) / currentZoom;
-            
-            const percentX = worldX / canvas.width;
-            const percentY = worldY / canvas.height;
-            
-            playerPosition.style.left = (percentX * minimap.clientWidth) + 'px';
-            playerPosition.style.top = (percentY * minimap.clientHeight) + 'px';
+            const scrollX = container.scrollLeft;
+            const scrollY = container.scrollTop;
+            const maxScrollX = container.scrollWidth - container.clientWidth;
+            const maxScrollY = container.scrollHeight - container.clientHeight;
+
+            const relativeX = scrollX / maxScrollX;
+            const relativeY = scrollY / maxScrollY;
+
+            playerPosition.style.left = (relativeX * minimap.clientWidth) + 'px';
+            playerPosition.style.top = (relativeY * minimap.clientHeight) + 'px';
         }
 
         window.addEventListener('load', () => {
             loadMap();
-            const canvas = document.getElementById('mapCanvas');
-            canvas.addEventListener('mousedown', handleMouseDown);
-            canvas.addEventListener('mousemove', handleMouseMove);
-            canvas.addEventListener('mouseup', handleMouseUp);
-            canvas.addEventListener('mouseleave', handleMouseUp);
-            canvas.addEventListener('wheel', handleWheel, { passive: false });
-            window.addEventListener('resize', loadMap);
+            
+            const container = document.getElementById('gameContainer');
+            container.addEventListener('scroll', updatePlayerPosition);
+            container.addEventListener('mousedown', handleMouseDown);
+            container.addEventListener('mousemove', handleMouseMove);
+            container.addEventListener('mouseup', handleMouseUp);
+            container.addEventListener('mouseleave', handleMouseUp);
+            container.addEventListener('wheel', handleWheel, { passive: false });
         });
     </script>
 </body>
