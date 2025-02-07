@@ -171,25 +171,23 @@
             const spriteLayer = document.getElementById('spriteLayer');
             const mapCanvas = document.getElementById('mapCanvas');
             
-            // Position in grass area
-            const sheep1 = new Sprite(300, 400, 'wolf_spritesheet.png');
-            spriteLayer.appendChild(sheep1.element);
-            sprites.set('sheep1', sheep1);
+            const sheep1 = new Sprite(600, 400, 'wolf_spritesheet.png');
+            const sheep2 = new Sprite(700, 400, 'wolf_spritesheet.png');
             
-            const sheep2 = new Sprite(400, 400, 'wolf_spritesheet.png');
+            spriteLayer.appendChild(sheep1.element);
             spriteLayer.appendChild(sheep2.element);
+            sprites.set('sheep1', sheep1);
             sprites.set('sheep2', sheep2);
-
-            // Scale spriteLayer with zoom
+         
             spriteLayer.style.transform = `scale(${currentZoom})`;
-
+         
             setInterval(() => {
                 sprites.forEach(sprite => {
                     sprite.playAnimation('walk');
                     sprite.update();
                 });
             }, 300);
-        }
+         }
 
         function handleMouseDown(e) {
             isDragging = true;
