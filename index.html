@@ -5,22 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wolf vs Sheep Battle</title>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+        }
         #gameContainer {
             position: relative;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            background: #87CEEB;
+            width: min-content;
+            height: min-content;
+            overflow: auto;
             cursor: grab;
+            margin: auto;
         }
-        #gameContainer:active { cursor: grabbing; }
+        #gameContainer:active {
+            cursor: grabbing;
+        }
         #mapCanvas {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform-origin: center;
+            display: block;
+            width: auto;
+            height: auto;
             image-rendering: pixelated;
+            transform-origin: 0 0;
+            transition: transform 0.1s;
         }
         .sprite {
             width: 32px;
@@ -58,7 +70,11 @@
             position: relative;
             overflow: hidden;
         }
-        #minimap-canvas { width: 100%; height: 100%; image-rendering: pixelated; }
+        #minimap-canvas {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
         .nav-buttons {
             position: absolute;
             top: 0;
@@ -174,15 +190,15 @@
             const mapCanvas = document.getElementById('mapCanvas');
             
             const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
-            spriteLayer.appendChild(sheep1.element);
-            sprites.set('sheep1', sheep1);
-            
             const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
+            
+            spriteLayer.appendChild(sheep1.element);
             spriteLayer.appendChild(sheep2.element);
+            sprites.set('sheep1', sheep1);
             sprites.set('sheep2', sheep2);
-
+         
             spriteLayer.style.transform = `scale(${currentZoom})`;
-
+         
             setInterval(() => {
                 sprites.forEach(sprite => {
                     sprite.playAnimation('walk');
@@ -223,12 +239,23 @@
             const canvas = document.getElementById('mapCanvas');
             const spriteLayer = document.getElementById('spriteLayer');
             
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left + container.scrollLeft;
+            const mouseY = e.clientY - rect.top + container.scrollTop;
+
             const zoomDelta = -Math.sign(e.deltaY) * ZOOM_SPEED;
             const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + zoomDelta));
             
             if (newZoom !== currentZoom) {
-                canvas.style.transform = `translate(-50%, -50%) scale(${newZoom})`;
+                const scaleFactor = newZoom / currentZoom;
+                const newScrollLeft = mouseX * scaleFactor - (e.clientX - rect.left);
+                const newScrollTop = mouseY * scaleFactor - (e.clientY - rect.top);
+                
+                canvas.style.transform = `scale(${newZoom})`;
                 spriteLayer.style.transform = `scale(${newZoom})`;
+                container.scrollLeft = newScrollLeft;
+                container.scrollTop = newScrollTop;
+                
                 currentZoom = newZoom;
                 updatePlayerPosition();
             }
@@ -245,7 +272,7 @@
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 initMinimap();
-                canvas.style.transform = `translate(-50%, -50%) scale(${currentZoom})`;
+                canvas.style.transform = `scale(${currentZoom})`;
                 initSprites();
             };
             img.src = 'Wolf.png';
