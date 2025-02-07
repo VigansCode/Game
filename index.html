@@ -5,43 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wolf vs Sheep Battle</title>
     <style>
-        body {
+        body, html {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
         #gameContainer {
-            position: relative;
             width: 100vw;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: auto;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow: hidden;
             cursor: grab;
         }
         #gameContainer:active {
             cursor: grabbing;
         }
         #mapCanvas {
-            max-width: 100%;
-            max-height: 100vh;
-            object-fit: contain;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
             image-rendering: pixelated;
             transform-origin: center;
             transition: transform 0.1s;
-        }
-        #spriteLayer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
         }
         #minimap-container {
             position: fixed;
@@ -101,7 +90,6 @@
 <body>
     <div id="gameContainer">
         <canvas id="mapCanvas"></canvas>
-        <div id="spriteLayer"></div>
     </div>
     <div id="minimap-container">
         <div id="minimap">
@@ -122,36 +110,40 @@
     </div>
 
     <script>
-        let gameState = null;
-        let sprites = new Map();
-        const MOVE_AMOUNT = 50;
-        let isDragging = false;
-        let startX, startY, scrollLeft, scrollTop;
-        let currentZoom = 1; // Starting with zoom level 1
+        let currentZoom = 1;
         const MIN_ZOOM = 0.5;
         const MAX_ZOOM = 4;
         const ZOOM_SPEED = 0.1;
+        let isDragging = false;
+        let startX, startY, lastX, lastY;
 
         function handleMouseDown(e) {
             isDragging = true;
-            const container = document.getElementById('gameContainer');
-            startX = e.pageX - container.offsetLeft;
-            startY = e.pageY - container.offsetTop;
-            scrollLeft = container.scrollLeft;
-            scrollTop = container.scrollTop;
+            startX = e.clientX;
+            startY = e.clientY;
+            lastX = startX;
+            lastY = startY;
         }
 
         function handleMouseMove(e) {
             if (!isDragging) return;
             e.preventDefault();
-            const container = document.getElementById('gameContainer');
-            const x = e.pageX - container.offsetLeft;
-            const y = e.pageY - container.offsetTop;
-            const moveX = x - startX;
-            const moveY = y - startY;
-            container.scrollLeft = scrollLeft - moveX;
-            container.scrollTop = scrollTop - moveY;
-            updatePlayerPosition();
+            
+            const deltaX = e.clientX - lastX;
+            const deltaY = e.clientY - lastY;
+            
+            const canvas = document.getElementById('mapCanvas');
+            const rect = canvas.getBoundingClientRect();
+            const transform = new DOMMatrix(getComputedStyle(canvas).transform);
+            
+            const x = transform.e + deltaX;
+            const y = transform.f + deltaY;
+            
+            canvas.style.transform = `translate(${x}px, ${y}px) scale(${currentZoom})`;
+            
+            lastX = e.clientX;
+            lastY = e.clientY;
+            updatePlayerPosition(x, y);
         }
 
         function handleMouseUp() {
@@ -160,55 +152,39 @@
 
         function handleWheel(e) {
             e.preventDefault();
-            const container = document.getElementById('gameContainer');
             const canvas = document.getElementById('mapCanvas');
+            const rect = canvas.getBoundingClientRect();
             
-            const rect = container.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left + container.scrollLeft;
-            const mouseY = e.clientY - rect.top + container.scrollTop;
-
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
             const zoomDelta = -Math.sign(e.deltaY) * ZOOM_SPEED;
             const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + zoomDelta));
             
             if (newZoom !== currentZoom) {
-                const scaleFactor = newZoom / currentZoom;
-                const newScrollLeft = mouseX * scaleFactor - (e.clientX - rect.left);
-                const newScrollTop = mouseY * scaleFactor - (e.clientY - rect.top);
+                const transform = new DOMMatrix(getComputedStyle(canvas).transform);
+                const x = transform.e;
+                const y = transform.f;
                 
-                canvas.style.transform = `scale(${newZoom})`;
-                container.scrollLeft = newScrollLeft;
-                container.scrollTop = newScrollTop;
-                
+                canvas.style.transform = `translate(${x}px, ${y}px) scale(${newZoom})`;
                 currentZoom = newZoom;
-                updatePlayerPosition();
+                updatePlayerPosition(x, y);
             }
         }
 
-        async function loadMap() {
+        function loadMap() {
             const canvas = document.getElementById('mapCanvas');
             const ctx = canvas.getContext('2d');
             ctx.imageSmoothingEnabled = false;
             
             const img = new Image();
             img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 initMinimap();
-                // Fit map to screen initially
-                fitMapToScreen();
             };
             img.src = 'Wolf.png';
-        }
-
-        function fitMapToScreen() {
-            const canvas = document.getElementById('mapCanvas');
-            const container = document.getElementById('gameContainer');
-            const scaleX = container.clientWidth / canvas.width;
-            const scaleY = container.clientHeight / canvas.height;
-            const scale = Math.min(scaleX, scaleY);
-            currentZoom = scale;
-            canvas.style.transform = `scale(${scale})`;
         }
 
         function initMinimap() {
@@ -227,53 +203,52 @@
         }
 
         function moveMap(direction) {
-            const container = document.getElementById('gameContainer');
+            const canvas = document.getElementById('mapCanvas');
+            const transform = new DOMMatrix(getComputedStyle(canvas).transform);
+            const x = transform.e;
+            const y = transform.f;
+            const moveAmount = 50;
+            
+            let newX = x;
+            let newY = y;
+            
             switch(direction) {
-                case 'up':
-                    container.scrollBy(0, -MOVE_AMOUNT);
-                    break;
-                case 'down':
-                    container.scrollBy(0, MOVE_AMOUNT);
-                    break;
-                case 'left':
-                    container.scrollBy(-MOVE_AMOUNT, 0);
-                    break;
-                case 'right':
-                    container.scrollBy(MOVE_AMOUNT, 0);
-                    break;
+                case 'up': newY += moveAmount; break;
+                case 'down': newY -= moveAmount; break;
+                case 'left': newX += moveAmount; break;
+                case 'right': newX -= moveAmount; break;
             }
-            updatePlayerPosition();
+            
+            canvas.style.transform = `translate(${newX}px, ${newY}px) scale(${currentZoom})`;
+            updatePlayerPosition(newX, newY);
         }
 
-        function updatePlayerPosition() {
-            const container = document.getElementById('gameContainer');
-            const minimap = document.getElementById('minimap');
+        function updatePlayerPosition(x, y) {
             const playerPosition = document.getElementById('player-position');
+            const minimap = document.getElementById('minimap');
+            const canvas = document.getElementById('mapCanvas');
             
-            const scrollX = container.scrollLeft;
-            const scrollY = container.scrollTop;
-            const maxScrollX = container.scrollWidth - container.clientWidth;
-            const maxScrollY = container.scrollHeight - container.clientHeight;
-
-            const relativeX = scrollX / maxScrollX;
-            const relativeY = scrollY / maxScrollY;
-
-            playerPosition.style.left = (relativeX * minimap.clientWidth) + 'px';
-            playerPosition.style.top = (relativeY * minimap.clientHeight) + 'px';
+            const percentX = -x / (canvas.width * currentZoom - canvas.width);
+            const percentY = -y / (canvas.height * currentZoom - canvas.height);
+            
+            const minimapX = percentX * minimap.clientWidth;
+            const minimapY = percentY * minimap.clientHeight;
+            
+            playerPosition.style.left = `${Math.max(0, Math.min(minimap.clientWidth, minimapX))}px`;
+            playerPosition.style.top = `${Math.max(0, Math.min(minimap.clientHeight, minimapY))}px`;
         }
 
         window.addEventListener('load', () => {
             loadMap();
             
             const container = document.getElementById('gameContainer');
-            container.addEventListener('scroll', updatePlayerPosition);
             container.addEventListener('mousedown', handleMouseDown);
             container.addEventListener('mousemove', handleMouseMove);
             container.addEventListener('mouseup', handleMouseUp);
             container.addEventListener('mouseleave', handleMouseUp);
             container.addEventListener('wheel', handleWheel, { passive: false });
             
-            window.addEventListener('resize', fitMapToScreen);
+            window.addEventListener('resize', loadMap);
         });
     </script>
 </body>
