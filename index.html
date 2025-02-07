@@ -401,6 +401,7 @@
                 const newScrollLeft = mouseX * scaleFactor - (e.clientX - rect.left);
                 const newScrollTop = mouseY * scaleFactor - (e.clientY - rect.top);
                 
+                canvas
                 canvas.style.transform = `scale(${newZoom})`;
                 spriteLayer.style.transform = `scale(${newZoom})`;
                 container.scrollLeft = newScrollLeft;
@@ -408,3 +409,80 @@
                 
                 currentZoom = newZoom;
                 updatePlayerPosition();
+            }
+        }
+
+        async function loadMap() {
+            const canvas = document.getElementById('mapCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                initMinimap();
+                canvas.style.transform = `scale(${currentZoom})`;
+                initSprites();
+            };
+            img.src = 'Wolf.png';
+        }
+
+        function initMinimap() {
+            const minimapCanvas = document.getElementById('minimap-canvas');
+            const ctx = minimapCanvas.getContext('2d');
+            
+            minimapCanvas.width = 150;
+            minimapCanvas.height = 150;
+            
+            const worldMap = new Image();
+            worldMap.onload = () => {
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(worldMap, 0, 0, minimapCanvas.width, minimapCanvas.height);
+            };
+            worldMap.src = 'Wolf.png';
+        }
+
+        function moveMap(direction) {
+            const container = document.getElementById('gameContainer');
+            switch(direction) {
+                case 'up': container.scrollBy(0, -MOVE_AMOUNT); break;
+                case 'down': container.scrollBy(0, MOVE_AMOUNT); break;
+                case 'left': container.scrollBy(-MOVE_AMOUNT, 0); break;
+                case 'right': container.scrollBy(MOVE_AMOUNT, 0); break;
+            }
+            updatePlayerPosition();
+        }
+
+        function updatePlayerPosition() {
+            const container = document.getElementById('gameContainer');
+            const minimap = document.getElementById('minimap');
+            const playerPosition = document.getElementById('player-position');
+            
+            const scrollX = container.scrollLeft;
+            const scrollY = container.scrollTop;
+            const maxScrollX = container.scrollWidth - container.clientWidth;
+            const maxScrollY = container.scrollHeight - container.clientHeight;
+
+            const relativeX = scrollX / maxScrollX;
+            const relativeY = scrollY / maxScrollY;
+
+            playerPosition.style.left = (relativeX * minimap.clientWidth) + 'px';
+            playerPosition.style.top = (relativeY * minimap.clientHeight) + 'px';
+        }
+
+        window.addEventListener('load', () => {
+            loadMap();
+            
+            const container = document.getElementById('gameContainer');
+            container.addEventListener('scroll', updatePlayerPosition);
+            container.addEventListener('mousedown', handleMouseDown);
+            container.addEventListener('mousemove', handleMouseMove);
+            container.addEventListener('mouseup', handleMouseUp);
+            container.addEventListener('mouseleave', handleMouseUp);
+            container.addEventListener('wheel', handleWheel, { passive: false });
+        });
+    </script>
+</body>
+</html>
