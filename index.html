@@ -20,53 +20,45 @@
             transition: transform 0.1s;
         }
         .sprite-container {
-            position: absolute;
-            pointer-events: none;
-            z-index: 1000;
-            transform-origin: top left;
-        }
-        .sprite {
-            width: 32px;
-            height: 32px;
-            background-size: 128px 768px;
-            image-rendering: pixelated;
-            border: 1px solid red;
-        }
-        .health-bar {
-            width: 32px;
-            height: 4px;
-            background: #333;
-            margin-bottom: 2px;
-            position: relative;
-        }
-        .health-bar-fill {
-            height: 100%;
-            background: #22cc22;
-            transition: width 0.2s;
-        }
-        #battle-ui {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 8px;
-            color: white;
-            z-index: 2000;
-        }
-        .vote-button {
-            padding: 8px 16px;
-            margin: 5px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            background: #4CAF50;
-            color: white;
-        }
-        .vote-button:disabled {
-            background: #666;
-            cursor: not-allowed;
-        }
+    position: absolute;
+    z-index: 1000;
+    transform-origin: top left;
+}
+.health-bar {
+    width: 32px;
+    height: 4px;
+    background: #333;
+    margin-bottom: 2px;
+    position: relative;
+}
+.health-bar-fill {
+    height: 100%;
+    background: #22cc22;
+    transition: width 0.2s;
+}
+#battle-ui {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    z-index: 2000;
+}
+.vote-button {
+    padding: 8px 16px;
+    margin: 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #4CAF50;
+    color: white;
+}
+.vote-button:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
         #minimap-container {
             position: fixed;
             bottom: 20px;
@@ -165,31 +157,31 @@
                 this.x = x;
                 this.y = y;
                 this.name = name;
-                this.health = 100;
-                this.damage = 10;
-                this.isAttacking = false;
-                this.attackCooldown = 0;
-                
-                // Create container for sprite and health bar
-                this.container = document.createElement('div');
-                this.container.className = 'sprite-container';
-                
-                // Create health bar
-                this.healthBarContainer = document.createElement('div');
-                this.healthBarContainer.className = 'health-bar';
-                this.healthBarFill = document.createElement('div');
-                this.healthBarFill.className = 'health-bar-fill';
-                this.healthBarFill.style.width = '100%';
-                this.healthBarContainer.appendChild(this.healthBarFill);
-                
-                // Create sprite element
-                this.element = document.createElement('div');
-                this.element.className = 'sprite';
-                this.element.style.backgroundImage = `url(${spritesheet})`;
-                
-                // Append elements to container
-                this.container.appendChild(this.healthBarContainer);
-                this.container.appendChild(this.element);
+this.health = 100;
+this.damage = 10;
+this.isAttacking = false;
+this.attackCooldown = 0;
+
+// Create container for sprite and health bar
+this.container = document.createElement('div');
+this.container.className = 'sprite-container';
+
+// Create health bar
+this.healthBarContainer = document.createElement('div');
+this.healthBarContainer.className = 'health-bar';
+this.healthBarFill = document.createElement('div');
+this.healthBarFill.className = 'health-bar-fill';
+this.healthBarFill.style.width = '100%';
+this.healthBarContainer.appendChild(this.healthBarFill);
+
+// Create sprite element
+this.element = document.createElement('div');
+this.element.className = 'sprite';
+this.element.style.backgroundImage = `url(${spritesheet})`;
+
+// Append elements to container
+this.container.appendChild(this.healthBarContainer);
+this.container.appendChild(this.element);
                 
                 this.animations = {
                     idle: { startFrame: 0, frames: 4 },
@@ -234,39 +226,39 @@
             }
 
             performHeadbutt(target) {
-                if (this.health <= 0) return; // Don't attack if defeated
-                
-                if (!this.isHeadbutting && this.attackCooldown <= 0) {
-                    this.isHeadbutting = true;
-                    this.playAnimation('headbutt');
-                    
-                    // Deal damage to target
-                    target.takeDamage(this.damage);
-                    
-                    // Set attack cooldown
-                    this.attackCooldown = 20;
-                    
-                    setTimeout(() => {
-                        this.isHeadbutting = false;
-                        this.playAnimation('idle');
-                    }, 400);
-                }
-            }
+    if (this.health <= 0) return; // Don't attack if defeated
+    
+    if (!this.isHeadbutting && this.attackCooldown <= 0) {
+        this.isHeadbutting = true;
+        this.playAnimation('headbutt');
+        
+        // Deal damage to target
+        target.takeDamage(this.damage);
+        
+        // Set attack cooldown
+        this.attackCooldown = 20;
+        
+        setTimeout(() => {
+            this.isHeadbutting = false;
+            this.playAnimation('idle');
+        }, 400);
+    }
+}
 
             takeDamage(amount) {
-                this.health = Math.max(0, this.health - amount);
-                this.healthBarFill.style.width = `${this.health}%`;
-                
-                if (this.health <= 0) {
-                    this.onDefeat();
-                }
-            }
+    this.health = Math.max(0, this.health - amount);
+    this.healthBarFill.style.width = `${this.health}%`;
+    
+    if (this.health <= 0) {
+        this.onDefeat();
+    }
+}
 
-            onDefeat() {
-                this.playAnimation('idle');
-                this.element.style.filter = 'grayscale(100%)';
-                updateBattleStatus(this);
-            }
+onDefeat() {
+    this.playAnimation('idle');
+    this.element.style.filter = 'grayscale(100%)';
+    updateBattleStatus(this);
+}
 
             playAnimation(animationName) {
                 if (this.animations[animationName]) {
@@ -302,31 +294,31 @@
         const ZOOM_SPEED = 0.1;
 
         let votes = {
-            sheep1: 0,
-            sheep2: 0
-        };
+    sheep1: 0,
+    sheep2: 0
+};
 
-        function vote(sheepName) {
-            votes[sheepName]++;
-            document.getElementById(`votes-${sheepName}`).textContent = votes[sheepName];
-        }
+function vote(sheepName) {
+    votes[sheepName]++;
+    document.getElementById(`votes-${sheepName}`).textContent = votes[sheepName];
+}
 
-        function updateBattleStatus(defeatedSprite) {
-            const statusElement = document.getElementById('battle-status');
-            statusElement.textContent = `${defeatedSprite.name} has been defeated!`;
-            
-            // Disable voting buttons
-            document.querySelectorAll('.vote-button').forEach(button => {
-                button.disabled = true;
-            });
-        }
+function updateBattleStatus(defeatedSprite) {
+    const statusElement = document.getElementById('battle-status');
+    statusElement.textContent = `${defeatedSprite.name} has been defeated!`;
+    
+    // Disable voting buttons
+    document.querySelectorAll('.vote-button').forEach(button => {
+        button.disabled = true;
+    });
+}
 
         function initSprites() {
             const spriteLayer = document.getElementById('spriteLayer');
             
             const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png', 'Sheep 1');
             const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png', 'Sheep 2');
-            
+
             spriteLayer.appendChild(sheep1.container);
             spriteLayer.appendChild(sheep2.container);
             sprites.set('sheep1', sheep1);
