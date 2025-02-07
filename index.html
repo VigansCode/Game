@@ -241,55 +241,62 @@
         const ZOOM_SPEED = 0.1;
 
         function initSprites() {
-            const spriteLayer = document.getElementById('spriteLayer');
-            const mapCanvas = document.getElementById('mapCanvas');
-            
-            const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
-            spriteLayer.appendChild(sheep1.element);
-            sprites.set('sheep1', sheep1);
-            
-            const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
-            spriteLayer.appendChild(sheep2.element);
-            sprites.set('sheep2', sheep2);
+    const spriteLayer = document.getElementById('spriteLayer');
+    const mapCanvas = document.getElementById('mapCanvas');
+    
+    const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
+    spriteLayer.appendChild(sheep1.element);
+    sprites.set('sheep1', sheep1);
+    
+    const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
+    spriteLayer.appendChild(sheep2.element);
+    sprites.set('sheep2', sheep2);
 
-            spriteLayer.style.transform = `scale(${currentZoom})`;
+    spriteLayer.style.transform = `scale(${currentZoom})`;
 
-            setInterval(() => {
-                const sheepArray = Array.from(sprites.values());
-                const sheep1 = sheepArray[0];
-                const sheep2 = sheepArray[1];
-                
-                if (sheep1.health > 0 && sheep2.health > 0) {
-                    // If one sheep has significantly less health, make it retreat
-                    if (sheep1.health < sheep2.health - 20) {
-                        sheep1.moveToward(sheep2.x, sheep2.y, true);
-                        sheep2.moveToward(sheep1.x, sheep1.y, false);
-                    } else if (sheep2.health < sheep1.health - 20) {
-                        sheep2.moveToward(sheep1.x, sheep1.y, true);
-                        sheep1.moveToward(sheep2.x, sheep2.y, false);
+    setInterval(() => {
+        const sheepArray = Array.from(sprites.values());
+        const sheep1 = sheepArray[0];
+        const sheep2 = sheepArray[1];
+        
+        if (sheep1.health > 0 && sheep2.health > 0) {
+            // Determine winner and loser based on health
+            if (sheep1.health < sheep2.health - 20) {
+                // Sheep1 is losing, only it moves away
+                sheep1.moveToward(sheep2.x, sheep2.y, true);
+                sheep2.playAnimation('idle'); // Winner stays and idles
+            } else if (sheep2.health < sheep1.health - 20) {
+                // Sheep2 is losing, only it moves away
+                sheep2.moveToward(sheep1.x, sheep1.y, true);
+                sheep1.playAnimation('idle'); // Winner stays and idles
+            } else {
+                // No clear winner yet, both move toward each other
+                sheep1.moveToward(sheep2.x, sheep2.y, false);
+                sheep2.moveToward(sheep1.x, sheep1.y, false);
+            }
+        }
+        
+        // Check for collisions and trigger headbutt
+        sheepArray.forEach(sheep => {
+            sheepArray.forEach(otherSheep => {
+                if (sheep !== otherSheep && 
+                    sheep.checkCollision(otherSheep) && 
+                    sheep.health > 0 && 
+                    otherSheep.health > 0) {
+                    sheep.performHeadbutt(otherSheep);
+                } else if (!sheep.isHeadbutting && sheep.health > 0) {
+                    if ((sheep === sheep1 && sheep1.health > sheep2.health) ||
+                        (sheep === sheep2 && sheep2.health > sheep1.health)) {
+                        sheep.playAnimation('idle'); // Winner idles
                     } else {
-                        // Normal combat behavior
-                        sheep1.moveToward(sheep2.x, sheep2.y, false);
-                        sheep2.moveToward(sheep1.x, sheep1.y, false);
+                        sheep.playAnimation('walk'); // Loser walks away
                     }
                 }
-                
-                // Check for collisions and trigger headbutt
-                sheepArray.forEach(sheep => {
-                    sheepArray.forEach(otherSheep => {
-                        if (sheep !== otherSheep && 
-                            sheep.checkCollision(otherSheep) && 
-                            sheep.health > 0 && 
-                            otherSheep.health > 0) {
-                            sheep.performHeadbutt(otherSheep);
-                        } else if (!sheep.isHeadbutting && sheep.health > 0) {
-                            sheep.playAnimation('walk');
-                        }
-                    });
-                    sheep.update();
-                });
-            }, 50);
-        }
+            });
+            sheep.update();
+        });
+    }, 50);
+}
 
         function handleMouseDown(e) {
             isDragging = true;
