@@ -12,11 +12,15 @@
         }
         #gameContainer {
             background-image: url('Wolf.png');
+            cursor: grab;
             position: relative;
             width: 100vw;
             height: 100vh;
             overflow: auto;
             background: #000;
+        }
+            #gameContainer:active {
+                cursor: grabbing;
         }
         #mapCanvas {
             image-rendering: pixelated;
