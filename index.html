@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wolf vs Sheep Battle</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
+        body { margin: 0; padding: 0; overflow: hidden; }
         #gameContainer {
             position: relative;
             width: 100vw;
@@ -18,9 +14,7 @@
             background: #000;
             cursor: grab;
         }
-        #gameContainer:active {
-            cursor: grabbing;
-        }
+        #gameContainer:active { cursor: grabbing; }
         #mapCanvas {
             image-rendering: pixelated;
             transform-origin: 0 0;
@@ -30,7 +24,7 @@
             width: 32px;
             height: 32px;
             position: absolute;
-            background-size: 928px 256px;
+            background-size: 128px 512px;
             image-rendering: pixelated;
             z-index: 1000;
             transition: left 0.5s linear, top 0.5s linear;
@@ -60,11 +54,7 @@
             position: relative;
             overflow: hidden;
         }
-        #minimap-canvas {
-            width: 100%;
-            height: 100%;
-            image-rendering: pixelated;
-        }
+        #minimap-canvas { width: 100%; height: 100%; image-rendering: pixelated; }
         .nav-buttons {
             position: absolute;
             top: 0;
@@ -122,15 +112,76 @@
     </div>
 
     <script>
+        class Sprite {
+            constructor(x, y, spritesheet) {
+                this.x = x;
+                this.y = y;
+                this.element = document.createElement('div');
+                this.element.className = 'sprite';
+                this.element.style.backgroundImage = `url(${spritesheet})`;
+                
+                this.animations = {
+                    idle: { startFrame: 0, frames: 4 },
+                    walk: { startFrame: 4, frames: 4 },
+                    attack: { startFrame: 8, frames: 4 }
+                };
+                
+                this.currentFrame = 0;
+                this.currentAnimation = 'idle';
+                this.setPosition(x, y);
+            }
+
+            setPosition(x, y) {
+                this.x = x;
+                this.y = y;
+                this.element.style.left = `${x}px`;
+                this.element.style.top = `${y}px`;
+            }
+
+            playAnimation(animationName) {
+                if (this.animations[animationName]) {
+                    this.currentAnimation = animationName;
+                    const animation = this.animations[animationName];
+                    const frameIndex = animation.startFrame + (this.currentFrame % animation.frames);
+                    const col = frameIndex % 4;
+                    const row = Math.floor(frameIndex / 4);
+                    
+                    this.element.style.backgroundPosition = `-${col * 32}px -${row * 32}px`;
+                }
+            }
+
+            update() {
+                this.currentFrame++;
+                this.playAnimation(this.currentAnimation);
+            }
+        }
+
         let gameState = null;
         let sprites = new Map();
         const MOVE_AMOUNT = 50;
         let isDragging = false;
         let startX, startY, scrollLeft, scrollTop;
-        let currentZoom = 2; // Starting at max zoom out level
+        let currentZoom = 2;
         const MIN_ZOOM = 2;
         const MAX_ZOOM = 4;
         const ZOOM_SPEED = 0.1;
+
+        function initSprites() {
+            const spriteLayer = document.getElementById('spriteLayer');
+            
+            const sheep = new Sprite(100, 100, 'wolf_spritesheet.png');
+            spriteLayer.appendChild(sheep.element);
+            sprites.set('sheep', sheep);
+            
+            const wolf = new Sprite(300, 300, 'wolf_spritesheet.png');
+            spriteLayer.appendChild(wolf.element);
+            sprites.set('wolf', wolf);
+
+            // Start game loop
+            setInterval(() => {
+                sprites.forEach(sprite => sprite.update());
+            }, 200);
+        }
 
         function handleMouseDown(e) {
             isDragging = true;
@@ -195,8 +246,6 @@
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 initMinimap();
-                
-                // Set initial zoom
                 canvas.style.transform = `scale(${currentZoom})`;
             };
             img.src = 'Wolf.png';
@@ -220,18 +269,10 @@
         function moveMap(direction) {
             const container = document.getElementById('gameContainer');
             switch(direction) {
-                case 'up':
-                    container.scrollBy(0, -MOVE_AMOUNT);
-                    break;
-                case 'down':
-                    container.scrollBy(0, MOVE_AMOUNT);
-                    break;
-                case 'left':
-                    container.scrollBy(-MOVE_AMOUNT, 0);
-                    break;
-                case 'right':
-                    container.scrollBy(MOVE_AMOUNT, 0);
-                    break;
+                case 'up': container.scrollBy(0, -MOVE_AMOUNT); break;
+                case 'down': container.scrollBy(0, MOVE_AMOUNT); break;
+                case 'left': container.scrollBy(-MOVE_AMOUNT, 0); break;
+                case 'right': container.scrollBy(MOVE_AMOUNT, 0); break;
             }
             updatePlayerPosition();
         }
@@ -255,6 +296,7 @@
 
         window.addEventListener('load', () => {
             loadMap();
+            initSprites();
             
             const container = document.getElementById('gameContainer');
             container.addEventListener('scroll', updatePlayerPosition);
