@@ -10,15 +10,17 @@
             position: relative;
             width: 100vw;
             height: 100vh;
-            overflow: auto;
-            background: #000;
+            overflow: hidden;
+            background: #87CEEB;
             cursor: grab;
         }
         #gameContainer:active { cursor: grabbing; }
         #mapCanvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-origin: center;
             image-rendering: pixelated;
-            transform-origin: 0 0;
-            transition: transform 0.1s;
         }
         .sprite {
             width: 32px;
@@ -172,22 +174,22 @@
             const mapCanvas = document.getElementById('mapCanvas');
             
             const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
-            const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
-            
             spriteLayer.appendChild(sheep1.element);
-            spriteLayer.appendChild(sheep2.element);
             sprites.set('sheep1', sheep1);
+            
+            const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
+            spriteLayer.appendChild(sheep2.element);
             sprites.set('sheep2', sheep2);
-         
+
             spriteLayer.style.transform = `scale(${currentZoom})`;
-         
+
             setInterval(() => {
                 sprites.forEach(sprite => {
                     sprite.playAnimation('walk');
                     sprite.update();
                 });
             }, 300);
-         }
+        }
 
         function handleMouseDown(e) {
             isDragging = true;
@@ -221,23 +223,12 @@
             const canvas = document.getElementById('mapCanvas');
             const spriteLayer = document.getElementById('spriteLayer');
             
-            const rect = container.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left + container.scrollLeft;
-            const mouseY = e.clientY - rect.top + container.scrollTop;
-
             const zoomDelta = -Math.sign(e.deltaY) * ZOOM_SPEED;
             const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + zoomDelta));
             
             if (newZoom !== currentZoom) {
-                const scaleFactor = newZoom / currentZoom;
-                const newScrollLeft = mouseX * scaleFactor - (e.clientX - rect.left);
-                const newScrollTop = mouseY * scaleFactor - (e.clientY - rect.top);
-                
-                canvas.style.transform = `scale(${newZoom})`;
+                canvas.style.transform = `translate(-50%, -50%) scale(${newZoom})`;
                 spriteLayer.style.transform = `scale(${newZoom})`;
-                container.scrollLeft = newScrollLeft;
-                container.scrollTop = newScrollTop;
-                
                 currentZoom = newZoom;
                 updatePlayerPosition();
             }
@@ -254,7 +245,7 @@
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 initMinimap();
-                canvas.style.transform = `scale(${currentZoom})`;
+                canvas.style.transform = `translate(-50%, -50%) scale(${currentZoom})`;
                 initSprites();
             };
             img.src = 'Wolf.png';
