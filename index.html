@@ -9,16 +9,18 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
         }
         #gameContainer {
             position: relative;
-            width: min-content;
-            height: min-content;
-            margin: auto;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             overflow: auto;
             cursor: grab;
         }
@@ -26,7 +28,9 @@
             cursor: grabbing;
         }
         #mapCanvas {
-            display: block;
+            max-width: 100%;
+            max-height: 100vh;
+            object-fit: contain;
             image-rendering: pixelated;
             transform-origin: center;
             transition: transform 0.1s;
@@ -123,8 +127,8 @@
         const MOVE_AMOUNT = 50;
         let isDragging = false;
         let startX, startY, scrollLeft, scrollTop;
-        let currentZoom = 2;
-        const MIN_ZOOM = 1;
+        let currentZoom = 1; // Starting with zoom level 1
+        const MIN_ZOOM = 0.5;
         const MAX_ZOOM = 4;
         const ZOOM_SPEED = 0.1;
 
@@ -191,9 +195,20 @@
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 initMinimap();
-                canvas.style.transform = `scale(${currentZoom})`;
+                // Fit map to screen initially
+                fitMapToScreen();
             };
             img.src = 'Wolf.png';
+        }
+
+        function fitMapToScreen() {
+            const canvas = document.getElementById('mapCanvas');
+            const container = document.getElementById('gameContainer');
+            const scaleX = container.clientWidth / canvas.width;
+            const scaleY = container.clientHeight / canvas.height;
+            const scale = Math.min(scaleX, scaleY);
+            currentZoom = scale;
+            canvas.style.transform = `scale(${scale})`;
         }
 
         function initMinimap() {
@@ -257,6 +272,8 @@
             container.addEventListener('mouseup', handleMouseUp);
             container.addEventListener('mouseleave', handleMouseUp);
             container.addEventListener('wheel', handleWheel, { passive: false });
+            
+            window.addEventListener('resize', fitMapToScreen);
         });
     </script>
 </body>
