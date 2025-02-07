@@ -11,16 +11,15 @@
             overflow: hidden;
         }
         #gameContainer {
-            background-image: url('Wolf.png');
-            cursor: grab;
             position: relative;
             width: 100vw;
             height: 100vh;
             overflow: auto;
             background: #000;
+            cursor: grab;
         }
-            #gameContainer:active {
-                cursor: grabbing;
+        #gameContainer:active {
+            cursor: grabbing;
         }
         #mapCanvas {
             image-rendering: pixelated;
@@ -126,6 +125,34 @@
         let gameState = null;
         let sprites = new Map();
         const MOVE_AMOUNT = 50;
+        let isDragging = false;
+        let startX, startY, scrollLeft, scrollTop;
+
+        function handleMouseDown(e) {
+            isDragging = true;
+            const container = document.getElementById('gameContainer');
+            startX = e.pageX - container.offsetLeft;
+            startY = e.pageY - container.offsetTop;
+            scrollLeft = container.scrollLeft;
+            scrollTop = container.scrollTop;
+        }
+
+        function handleMouseMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const container = document.getElementById('gameContainer');
+            const x = e.pageX - container.offsetLeft;
+            const y = e.pageY - container.offsetTop;
+            const moveX = x - startX;
+            const moveY = y - startY;
+            container.scrollLeft = scrollLeft - moveX;
+            container.scrollTop = scrollTop - moveY;
+            updatePlayerPosition();
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+        }
 
         async function loadMap() {
             const canvas = document.getElementById('mapCanvas');
@@ -198,6 +225,10 @@
             
             const container = document.getElementById('gameContainer');
             container.addEventListener('scroll', updatePlayerPosition);
+            container.addEventListener('mousedown', handleMouseDown);
+            container.addEventListener('mousemove', handleMouseMove);
+            container.addEventListener('mouseup', handleMouseUp);
+            container.addEventListener('mouseleave', handleMouseUp);
         });
     </script>
 </body>
