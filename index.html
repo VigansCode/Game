@@ -24,7 +24,7 @@
         #mapCanvas {
             image-rendering: pixelated;
             transform-origin: 0 0;
-            transform: scale(2);
+            transition: transform 0.1s;
         }
         .sprite {
             width: 32px;
@@ -127,6 +127,10 @@
         const MOVE_AMOUNT = 50;
         let isDragging = false;
         let startX, startY, scrollLeft, scrollTop;
+        let currentZoom = 2;
+        const MIN_ZOOM = 1;
+        const MAX_ZOOM = 4;
+        const ZOOM_SPEED = 0.1;
 
         function handleMouseDown(e) {
             isDragging = true;
@@ -154,6 +158,32 @@
             isDragging = false;
         }
 
+        function handleWheel(e) {
+            e.preventDefault();
+            const container = document.getElementById('gameContainer');
+            const canvas = document.getElementById('mapCanvas');
+            
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left + container.scrollLeft;
+            const mouseY = e.clientY - rect.top + container.scrollTop;
+
+            const zoomDelta = -Math.sign(e.deltaY) * ZOOM_SPEED;
+            const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + zoomDelta));
+            
+            if (newZoom !== currentZoom) {
+                const scaleFactor = newZoom / currentZoom;
+                const newScrollLeft = mouseX * scaleFactor - (e.clientX - rect.left);
+                const newScrollTop = mouseY * scaleFactor - (e.clientY - rect.top);
+                
+                canvas.style.transform = `scale(${newZoom})`;
+                container.scrollLeft = newScrollLeft;
+                container.scrollTop = newScrollTop;
+                
+                currentZoom = newZoom;
+                updatePlayerPosition();
+            }
+        }
+
         async function loadMap() {
             const canvas = document.getElementById('mapCanvas');
             const ctx = canvas.getContext('2d');
@@ -165,6 +195,9 @@
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 initMinimap();
+                
+                // Set initial zoom
+                canvas.style.transform = `scale(${currentZoom})`;
             };
             img.src = 'Wolf.png';
         }
@@ -229,6 +262,7 @@
             container.addEventListener('mousemove', handleMouseMove);
             container.addEventListener('mouseup', handleMouseUp);
             container.addEventListener('mouseleave', handleMouseUp);
+            container.addEventListener('wheel', handleWheel, { passive: false });
         });
     </script>
 </body>
