@@ -11,20 +11,21 @@
             overflow: hidden;
         }
         #gameContainer {
+            background-image: url('Wolf.png');
+            cursor: grab;
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            width: fit-content;
+            height: fit-content;
             overflow: auto;
             background: #000;
-            cursor: grab;
         }
-        #gameContainer:active {
-            cursor: grabbing;
+            #gameContainer:active {
+                cursor: grabbing;
         }
         #mapCanvas {
             image-rendering: pixelated;
             transform-origin: 0 0;
-            transition: transform 0.1s;
+            transform: scale(2);
         }
         .sprite {
             width: 32px;
@@ -125,64 +126,6 @@
         let gameState = null;
         let sprites = new Map();
         const MOVE_AMOUNT = 50;
-        let isDragging = false;
-        let startX, startY, scrollLeft, scrollTop;
-        let currentZoom = 2;
-        const MIN_ZOOM = 1;
-        const MAX_ZOOM = 4;
-        const ZOOM_SPEED = 0.1;
-
-        function handleMouseDown(e) {
-            isDragging = true;
-            const container = document.getElementById('gameContainer');
-            startX = e.pageX - container.offsetLeft;
-            startY = e.pageY - container.offsetTop;
-            scrollLeft = container.scrollLeft;
-            scrollTop = container.scrollTop;
-        }
-
-        function handleMouseMove(e) {
-            if (!isDragging) return;
-            e.preventDefault();
-            const container = document.getElementById('gameContainer');
-            const x = e.pageX - container.offsetLeft;
-            const y = e.pageY - container.offsetTop;
-            const moveX = x - startX;
-            const moveY = y - startY;
-            container.scrollLeft = scrollLeft - moveX;
-            container.scrollTop = scrollTop - moveY;
-            updatePlayerPosition();
-        }
-
-        function handleMouseUp() {
-            isDragging = false;
-        }
-
-        function handleWheel(e) {
-            e.preventDefault();
-            const container = document.getElementById('gameContainer');
-            const canvas = document.getElementById('mapCanvas');
-            
-            const rect = container.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left + container.scrollLeft;
-            const mouseY = e.clientY - rect.top + container.scrollTop;
-
-            const zoomDelta = -Math.sign(e.deltaY) * ZOOM_SPEED;
-            const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + zoomDelta));
-            
-            if (newZoom !== currentZoom) {
-                const scaleFactor = newZoom / currentZoom;
-                const newScrollLeft = mouseX * scaleFactor - (e.clientX - rect.left);
-                const newScrollTop = mouseY * scaleFactor - (e.clientY - rect.top);
-                
-                canvas.style.transform = `scale(${newZoom})`;
-                container.scrollLeft = newScrollLeft;
-                container.scrollTop = newScrollTop;
-                
-                currentZoom = newZoom;
-                updatePlayerPosition();
-            }
-        }
 
         async function loadMap() {
             const canvas = document.getElementById('mapCanvas');
@@ -195,9 +138,6 @@
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 initMinimap();
-                
-                // Set initial zoom
-                canvas.style.transform = `scale(${currentZoom})`;
             };
             img.src = 'Wolf.png';
         }
@@ -258,11 +198,6 @@
             
             const container = document.getElementById('gameContainer');
             container.addEventListener('scroll', updatePlayerPosition);
-            container.addEventListener('mousedown', handleMouseDown);
-            container.addEventListener('mousemove', handleMouseMove);
-            container.addEventListener('mouseup', handleMouseUp);
-            container.addEventListener('mouseleave', handleMouseUp);
-            container.addEventListener('wheel', handleWheel, { passive: false });
         });
     </script>
 </body>
