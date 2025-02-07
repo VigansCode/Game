@@ -9,31 +9,27 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
         #gameContainer {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            width: min-content;
+            height: min-content;
+            margin: auto;
             overflow: auto;
-            background: #000;
             cursor: grab;
         }
         #gameContainer:active {
             cursor: grabbing;
         }
         #mapCanvas {
+            display: block;
             image-rendering: pixelated;
-            transform-origin: 0 0;
+            transform-origin: center;
             transition: transform 0.1s;
-        }
-        .sprite {
-            width: 32px;
-            height: 32px;
-            position: absolute;
-            background-size: 928px 256px;
-            image-rendering: pixelated;
-            z-index: 1000;
-            transition: left 0.5s linear, top 0.5s linear;
         }
         #spriteLayer {
             position: absolute;
@@ -195,8 +191,6 @@
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
                 initMinimap();
-                
-                // Set initial zoom
                 canvas.style.transform = `scale(${currentZoom})`;
             };
             img.src = 'Wolf.png';
