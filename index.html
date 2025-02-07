@@ -163,15 +163,16 @@
                 this.element.style.top = `${y}px`;
             }
 
-            moveToward(targetX, targetY) {
+            moveToward(targetX, targetY, shouldRetreat = false) {
                 const dx = targetX - this.x;
                 const dy = targetY - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 if (distance > 0) {
-                    const speed = 2;
-                    const normalizedDx = (dx / distance) * speed;
-                    const normalizedDy = (dy / distance) * speed;
+                    const speed = shouldRetreat ? 3 : 2; // Faster when retreating
+                    const direction = shouldRetreat ? -1 : 1; // Reverse direction if retreating
+                    const normalizedDx = direction * (dx / distance) * speed;
+                    const normalizedDy = direction * (dy / distance) * speed;
                     this.setPosition(this.x + normalizedDx, this.y + normalizedDy);
                 }
             }
@@ -199,7 +200,6 @@
                     this.isHeadbutting = true;
                     this.playAnimation('headbutt');
                     
-                    // Deal damage
                     const damage = Math.random() * 10 + 5; // Random damage between 5-15
                     otherSprite.takeDamage(damage);
                     
@@ -256,11 +256,22 @@
 
             setInterval(() => {
                 const sheepArray = Array.from(sprites.values());
+                const sheep1 = sheepArray[0];
+                const sheep2 = sheepArray[1];
                 
-                // Move sheep toward each other if both are alive
-                if (sheepArray[0].health > 0 && sheepArray[1].health > 0) {
-                    sheepArray[0].moveToward(sheepArray[1].x, sheepArray[1].y);
-                    sheepArray[1].moveToward(sheepArray[0].x, sheepArray[0].y);
+                if (sheep1.health > 0 && sheep2.health > 0) {
+                    // If one sheep has significantly less health, make it retreat
+                    if (sheep1.health < sheep2.health - 20) {
+                        sheep1.moveToward(sheep2.x, sheep2.y, true);
+                        sheep2.moveToward(sheep1.x, sheep1.y, false);
+                    } else if (sheep2.health < sheep1.health - 20) {
+                        sheep2.moveToward(sheep1.x, sheep1.y, true);
+                        sheep1.moveToward(sheep2.x, sheep2.y, false);
+                    } else {
+                        // Normal combat behavior
+                        sheep1.moveToward(sheep2.x, sheep2.y, false);
+                        sheep2.moveToward(sheep1.x, sheep1.y, false);
+                    }
                 }
                 
                 // Check for collisions and trigger headbutt
