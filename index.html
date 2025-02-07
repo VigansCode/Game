@@ -19,46 +19,25 @@
             transform-origin: 0 0;
             transition: transform 0.1s;
         }
-        .sprite-container {
-    position: absolute;
-    z-index: 1000;
-    transform-origin: top left;
-}
-.health-bar {
-    width: 32px;
-    height: 4px;
-    background: #333;
-    margin-bottom: 2px;
-    position: relative;
-}
-.health-bar-fill {
-    height: 100%;
-    background: #22cc22;
-    transition: width 0.2s;
-}
-#battle-ui {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 15px;
-    border-radius: 8px;
-    color: white;
-    z-index: 2000;
-}
-.vote-button {
-    padding: 8px 16px;
-    margin: 5px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    background: #4CAF50;
-    color: white;
-}
-.vote-button:disabled {
-    background: #666;
-    cursor: not-allowed;
-}
+        .sprite {
+            width: 32px;
+            height: 32px;
+            position: absolute;
+            background-size: 128px 768px;
+            image-rendering: pixelated;
+            z-index: 1000;
+            border: 1px solid red;
+            transform-origin: top left;
+        }
+        #spriteLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            transform-origin: 0 0;
+        }
         #minimap-container {
             position: fixed;
             bottom: 20px;
@@ -76,11 +55,7 @@
             position: relative;
             overflow: hidden;
         }
-        #minimap-canvas { 
-            width: 100%; 
-            height: 100%; 
-            image-rendering: pixelated; 
-        }
+        #minimap-canvas { width: 100%; height: 100%; image-rendering: pixelated; }
         .nav-buttons {
             position: absolute;
             top: 0;
@@ -119,20 +94,6 @@
         <canvas id="mapCanvas"></canvas>
         <div id="spriteLayer"></div>
     </div>
-    <div id="battle-ui">
-        <div>
-            <h3>Battle Status</h3>
-            <p id="battle-status">Battle in progress...</p>
-        </div>
-        <div>
-            <button class="vote-button" onclick="vote('sheep1')">Vote Sheep 1</button>
-            <button class="vote-button" onclick="vote('sheep2')">Vote Sheep 2</button>
-        </div>
-        <div>
-            <p>Votes Sheep 1: <span id="votes-sheep1">0</span></p>
-            <p>Votes Sheep 2: <span id="votes-sheep2">0</span></p>
-        </div>
-    </div>
     <div id="minimap-container">
         <div id="minimap">
             <canvas id="minimap-canvas"></canvas>
@@ -153,40 +114,17 @@
 
     <script>
         class Sprite {
-            constructor(x, y, spritesheet, name) {
+            constructor(x, y, spritesheet) {
                 this.x = x;
                 this.y = y;
-                this.name = name;
-this.health = 100;
-this.damage = 10;
-this.isAttacking = false;
-this.attackCooldown = 0;
-
-// Create container for sprite and health bar
-this.container = document.createElement('div');
-this.container.className = 'sprite-container';
-
-// Create health bar
-this.healthBarContainer = document.createElement('div');
-this.healthBarContainer.className = 'health-bar';
-this.healthBarFill = document.createElement('div');
-this.healthBarFill.className = 'health-bar-fill';
-this.healthBarFill.style.width = '100%';
-this.healthBarContainer.appendChild(this.healthBarFill);
-
-// Create sprite element
-this.element = document.createElement('div');
-this.element.className = 'sprite';
-this.element.style.backgroundImage = `url(${spritesheet})`;
-
-// Append elements to container
-this.container.appendChild(this.healthBarContainer);
-this.container.appendChild(this.element);
+                this.element = document.createElement('div');
+                this.element.className = 'sprite';
+                this.element.style.backgroundImage = `url(${spritesheet})`;
                 
                 this.animations = {
                     idle: { startFrame: 0, frames: 4 },
                     walk: { startFrame: 4, frames: 4 },
-                    headbutt: { startFrame: 8, frames: 4 }
+                    headbutt: { startFrame: 8, frames: 4 }  // Added headbutt animation
                 };
                 
                 this.currentFrame = 0;
@@ -198,13 +136,11 @@ this.container.appendChild(this.element);
             setPosition(x, y) {
                 this.x = x;
                 this.y = y;
-                this.container.style.left = `${x}px`;
-                this.container.style.top = `${y}px`;
+                this.element.style.left = `${x}px`;
+                this.element.style.top = `${y}px`;
             }
 
             moveToward(targetX, targetY) {
-                if (this.health <= 0) return; // Don't move if defeated
-                
                 const dx = targetX - this.x;
                 const dy = targetY - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
@@ -222,46 +158,23 @@ this.container.appendChild(this.element);
                     Math.pow(this.x - otherSprite.x, 2) + 
                     Math.pow(this.y - otherSprite.y, 2)
                 );
-                return distance < 32;
+                return distance < 32;  // Collision distance in pixels
             }
 
-            performHeadbutt(target) {
-    if (this.health <= 0) return; // Don't attack if defeated
-    
-    if (!this.isHeadbutting && this.attackCooldown <= 0) {
-        this.isHeadbutting = true;
-        this.playAnimation('headbutt');
-        
-        // Deal damage to target
-        target.takeDamage(this.damage);
-        
-        // Set attack cooldown
-        this.attackCooldown = 20;
-        
-        setTimeout(() => {
-            this.isHeadbutting = false;
-            this.playAnimation('idle');
-        }, 400);
-    }
-}
-
-            takeDamage(amount) {
-    this.health = Math.max(0, this.health - amount);
-    this.healthBarFill.style.width = `${this.health}%`;
-    
-    if (this.health <= 0) {
-        this.onDefeat();
-    }
-}
-
-onDefeat() {
-    this.playAnimation('idle');
-    this.element.style.filter = 'grayscale(100%)';
-    updateBattleStatus(this);
-}
+            performHeadbutt() {
+                if (!this.isHeadbutting) {
+                    this.isHeadbutting = true;
+                    this.playAnimation('headbutt');
+                    
+                    setTimeout(() => {
+                        this.isHeadbutting = false;
+                        this.playAnimation('idle');
+                    }, 400);
+                }
+            }
 
             playAnimation(animationName) {
-                if (this.animations[animationName]) {
+                if (this.animations[animationName] && !this.isHeadbutting) {
                     this.currentAnimation = animationName;
                     const animation = this.animations[animationName];
                     const frameIndex = animation.startFrame + (this.currentFrame % animation.frames);
@@ -274,9 +187,6 @@ onDefeat() {
 
             update() {
                 this.currentFrame++;
-                if (this.attackCooldown > 0) {
-                    this.attackCooldown--;
-                }
                 if (!this.isHeadbutting) {
                     this.playAnimation(this.currentAnimation);
                 }
@@ -293,57 +203,37 @@ onDefeat() {
         const MAX_ZOOM = 4;
         const ZOOM_SPEED = 0.1;
 
-        let votes = {
-    sheep1: 0,
-    sheep2: 0
-};
-
-function vote(sheepName) {
-    votes[sheepName]++;
-    document.getElementById(`votes-${sheepName}`).textContent = votes[sheepName];
-}
-
-function updateBattleStatus(defeatedSprite) {
-    const statusElement = document.getElementById('battle-status');
-    statusElement.textContent = `${defeatedSprite.name} has been defeated!`;
-    
-    // Disable voting buttons
-    document.querySelectorAll('.vote-button').forEach(button => {
-        button.disabled = true;
-    });
-}
-
         function initSprites() {
             const spriteLayer = document.getElementById('spriteLayer');
+            const mapCanvas = document.getElementById('mapCanvas');
             
-            const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png', 'Sheep 1');
-            const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png', 'Sheep 2');
-
-            spriteLayer.appendChild(sheep1.container);
-            spriteLayer.appendChild(sheep2.container);
+            const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
+            const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
+            
+            spriteLayer.appendChild(sheep1.element);
+            spriteLayer.appendChild(sheep2.element);
             sprites.set('sheep1', sheep1);
             sprites.set('sheep2', sheep2);
-            
+         
             spriteLayer.style.transform = `scale(${currentZoom})`;
-            
-            // Battle loop
+         
+            // Add movement and collision detection
             setInterval(() => {
                 const sheepArray = Array.from(sprites.values());
                 
-                // Move sheep toward each other if they're not defeated
-                if (sheepArray[0].health > 0 && sheepArray[1].health > 0) {
-                    sheepArray[0].moveToward(sheepArray[1].x, sheepArray[1].y);
-                    sheepArray[1].moveToward(sheepArray[0].x, sheepArray[0].y);
-                }
+                // Move sheep toward each other
+                sheepArray[0].moveToward(sheepArray[1].x, sheepArray[1].y);
+                sheepArray[1].moveToward(sheepArray[0].x, sheepArray[0].y);
                 
                 // Check for collisions and trigger headbutt
                 sheepArray.forEach(sheep => {
-                    const otherSheep = sheepArray.find(s => s !== sheep);
-                    if (sheep.checkCollision(otherSheep)) {
-                        sheep.performHeadbutt(otherSheep);
-                    } else if (!sheep.isHeadbutting && sheep.health > 0) {
-                        sheep.playAnimation('walk');
-                    }
+                    sheepArray.forEach(otherSheep => {
+                        if (sheep !== otherSheep && sheep.checkCollision(otherSheep)) {
+                            sheep.performHeadbutt();
+                        } else if (!sheep.isHeadbutting) {
+                            sheep.playAnimation('walk');
+                        }
+                    });
                     sheep.update();
                 });
             }, 50);
@@ -393,7 +283,6 @@ function updateBattleStatus(defeatedSprite) {
                 const newScrollLeft = mouseX * scaleFactor - (e.clientX - rect.left);
                 const newScrollTop = mouseY * scaleFactor - (e.clientY - rect.top);
                 
-                canvas
                 canvas.style.transform = `scale(${newZoom})`;
                 spriteLayer.style.transform = `scale(${newZoom})`;
                 container.scrollLeft = newScrollLeft;
