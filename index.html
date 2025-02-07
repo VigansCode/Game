@@ -244,12 +244,13 @@
     const spriteLayer = document.getElementById('spriteLayer');
     const mapCanvas = document.getElementById('mapCanvas');
     
-    const sheep1 = new Sprite(350, 400, 'wolf_spritesheet.png');
-    spriteLayer.appendChild(sheep1.element);
-    sprites.set('sheep1', sheep1);
+    // Start close together for battle
+    const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
+    const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
     
-    const sheep2 = new Sprite(650, 400, 'wolf_spritesheet.png');
+    spriteLayer.appendChild(sheep1.element);
     spriteLayer.appendChild(sheep2.element);
+    sprites.set('sheep1', sheep1);
     sprites.set('sheep2', sheep2);
 
     spriteLayer.style.transform = `scale(${currentZoom})`;
@@ -260,37 +261,35 @@
         const sheep2 = sheepArray[1];
         
         if (sheep1.health > 0 && sheep2.health > 0) {
-            // Determine winner and loser based on health
-            if (sheep1.health < sheep2.health - 20) {
-                // Sheep1 is losing, only it moves away
-                sheep1.moveToward(sheep2.x, sheep2.y, true);
-                sheep2.playAnimation('idle'); // Winner stays and idles
-            } else if (sheep2.health < sheep1.health - 20) {
-                // Sheep2 is losing, only it moves away
-                sheep2.moveToward(sheep1.x, sheep1.y, true);
-                sheep1.playAnimation('idle'); // Winner stays and idles
+            const healthDifference = Math.abs(sheep1.health - sheep2.health);
+            
+            if (healthDifference > 30) {  // Only retreat after significant damage
+                // Determine loser and make them retreat
+                if (sheep1.health < sheep2.health) {
+                    sheep1.moveToward(sheep2.x - 200, sheep2.y, true); // Retreat left
+                    sheep2.playAnimation('idle');
+                } else {
+                    sheep2.moveToward(sheep1.x + 200, sheep1.y, true); // Retreat right
+                    sheep1.playAnimation('idle');
+                }
             } else {
-                // No clear winner yet, both move toward each other
+                // Keep fighting in center
                 sheep1.moveToward(sheep2.x, sheep2.y, false);
                 sheep2.moveToward(sheep1.x, sheep1.y, false);
             }
         }
         
-        // Check for collisions and trigger headbutt
+        // Collision and headbutt checks
         sheepArray.forEach(sheep => {
             sheepArray.forEach(otherSheep => {
                 if (sheep !== otherSheep && 
                     sheep.checkCollision(otherSheep) && 
                     sheep.health > 0 && 
-                    otherSheep.health > 0) {
+                    otherSheep.health > 0 &&
+                    Math.abs(sheep1.health - sheep2.health) <= 30) {  // Only headbutt during close fight
                     sheep.performHeadbutt(otherSheep);
                 } else if (!sheep.isHeadbutting && sheep.health > 0) {
-                    if ((sheep === sheep1 && sheep1.health > sheep2.health) ||
-                        (sheep === sheep2 && sheep2.health > sheep1.health)) {
-                        sheep.playAnimation('idle'); // Winner idles
-                    } else {
-                        sheep.playAnimation('walk'); // Loser walks away
-                    }
+                    sheep.playAnimation('walk');
                 }
             });
             sheep.update();
