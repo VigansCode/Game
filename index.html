@@ -24,7 +24,7 @@
             width: 32px;
             height: 32px;
             position: absolute;
-            background-size: 32px 512px;
+            background-size: 128px 768px;
             image-rendering: pixelated;
             z-index: 1000;
             transition: left 0.5s linear, top 0.5s linear;
@@ -121,13 +121,16 @@
                 this.element.style.backgroundImage = `url(${spritesheet})`;
                 
                 this.animations = {
-                    idle: { startFrame: 0, frames: 1 },
-                    walk: { startFrame: 1, frames: 2 }
+                    idle: { startFrame: 0, frames: 4 },
+                    walk: { startFrame: 4, frames: 4 }
                 };
                 
                 this.currentFrame = 0;
                 this.currentAnimation = 'idle';
                 this.setPosition(x, y);
+                
+                // Debug: Add red border to see sprite boundaries
+                this.element.style.border = '1px solid red';
             }
 
             setPosition(x, y) {
@@ -142,8 +145,13 @@
                     this.currentAnimation = animationName;
                     const animation = this.animations[animationName];
                     const frameIndex = animation.startFrame + (this.currentFrame % animation.frames);
+                    const col = frameIndex % 4;
+                    const row = Math.floor(frameIndex / 4);
                     
-                    this.element.style.backgroundPosition = `0px -${frameIndex * 32}px`;
+                    this.element.style.backgroundPosition = `-${col * 32}px -${row * 32}px`;
+                    
+                    // Debug: Log position
+                    console.log(`Frame: ${frameIndex}, Position: -${col * 32}px -${row * 32}px`);
                 }
             }
 
