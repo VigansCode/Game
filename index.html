@@ -254,56 +254,57 @@ class Sprite {
     const spriteLayer = document.getElementById('spriteLayer');
     const mapCanvas = document.getElementById('mapCanvas');
     
-    // Original white sheep in the middle
+    // First battle pair (middle of the map)
     const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
     spriteLayer.appendChild(sheep1.element);
     sprites.set('sheep1', sheep1);
     
-    const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
-    spriteLayer.appendChild(sheep2.element);
-    sprites.set('sheep2', sheep2);
-
-    // Add two black sheep at different locations
-    const darkSheep1 = new Sprite(200, 200, 'dark_wolf_spritesheet.png');
+    const darkSheep1 = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
     spriteLayer.appendChild(darkSheep1.element);
     sprites.set('darkSheep1', darkSheep1);
+
+    // Second battle pair (up on the map)
+    const sheep2 = new Sprite(450, 200, 'wolf_spritesheet.png');
+    spriteLayer.appendChild(sheep2.element);
+    sprites.set('sheep2', sheep2);
     
-    const darkSheep2 = new Sprite(800, 200, 'dark_wolf_spritesheet.png');
+    const darkSheep2 = new Sprite(550, 200, 'dark_wolf_spritesheet.png');
     spriteLayer.appendChild(darkSheep2.element);
     sprites.set('darkSheep2', darkSheep2);
 
     spriteLayer.style.transform = `scale(${currentZoom})`;
 
     setInterval(() => {
-        const allSprites = Array.from(sprites.values());
-        const whiteSheep = [sheep1, sheep2];
-        const darkSheep = [darkSheep1, darkSheep2];
+        // Group sprites into their battle pairs
+        const battlePairs = [
+            [sheep1, darkSheep1],    // First pair
+            [sheep2, darkSheep2]     // Second pair
+        ];
         
-        // White sheep fight each other in the middle
-        if (whiteSheep[0].health > 0 && whiteSheep[1].health > 0) {
-            whiteSheep[0].moveToward(whiteSheep[1].x, whiteSheep[1].y);
-            whiteSheep[1].moveToward(whiteSheep[0].x, whiteSheep[0].y);
-        }
-
-        // Dark sheep fight each other at their location
-        if (darkSheep[0].health > 0 && darkSheep[1].health > 0) {
-            darkSheep[0].moveToward(darkSheep[1].x, darkSheep[1].y);
-            darkSheep[1].moveToward(darkSheep[0].x, darkSheep[0].y);
-        }
-        
-        // Check for collisions and trigger headbutt
-        allSprites.forEach(sprite => {
-            allSprites.forEach(otherSprite => {
-                if (sprite !== otherSprite && 
-                    sprite.checkCollision(otherSprite) && 
-                    sprite.health > 0 && 
-                    otherSprite.health > 0) {
-                    sprite.performHeadbutt(otherSprite);
-                } else if (!sprite.isHeadbutting && sprite.health > 0) {
-                    sprite.playAnimation('walk');
-                }
-            });
-            sprite.update();
+        // Update each battle pair
+        battlePairs.forEach(pair => {
+            const [sheep, darkSheep] = pair;
+            
+            // Move toward each other if both are alive
+            if (sheep.health > 0 && darkSheep.health > 0) {
+                sheep.moveToward(darkSheep.x, darkSheep.y);
+                darkSheep.moveToward(sheep.x, sheep.y);
+            }
+            
+            // Check for collisions between the pair
+            if (sheep.checkCollision(darkSheep) && 
+                sheep.health > 0 && 
+                darkSheep.health > 0) {
+                sheep.performHeadbutt(darkSheep);
+                darkSheep.performHeadbutt(sheep);
+            } else {
+                if (!sheep.isHeadbutting && sheep.health > 0) sheep.playAnimation('walk');
+                if (!darkSheep.isHeadbutting && darkSheep.health > 0) darkSheep.playAnimation('walk');
+            }
+            
+            // Update animations
+            sheep.update();
+            darkSheep.update();
         });
     }, 50);
 }
