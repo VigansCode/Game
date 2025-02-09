@@ -181,7 +181,7 @@ class Sprite {
     const dy = targetY - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    if (distance > 32) { // Stop when within attack range
+    if (distance > 16) {  // Reduced from 32 to make them get closer
         this.updateDirection(targetX);
         const speed = 2;
         const normalizedDx = (dx / distance) * speed;
@@ -190,13 +190,13 @@ class Sprite {
     }
 }
 
-    checkCollision(otherSprite) {
-        const distance = Math.sqrt(
-            Math.pow(this.x - otherSprite.x, 2) + 
-            Math.pow(this.y - otherSprite.y, 2)
-        );
-        return distance < 32;
-    }
+checkCollision(otherSprite) {
+    const distance = Math.sqrt(
+        Math.pow(this.x - otherSprite.x, 2) + 
+        Math.pow(this.y - otherSprite.y, 2)
+    );
+    return distance < 16;  // Reduced from 32 to make them get closer
+}
 
     performHeadbutt(otherSprite) {
         if (!this.isHeadbutting && this.health > 0) {
