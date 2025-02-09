@@ -254,47 +254,45 @@ class Sprite {
     const spriteLayer = document.getElementById('spriteLayer');
     const mapCanvas = document.getElementById('mapCanvas');
     
-    // Create regular sheep
+    // Original white sheep in the middle
     const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
     spriteLayer.appendChild(sheep1.element);
     sprites.set('sheep1', sheep1);
     
-    // Create dark sheep
-    const darkSheep1 = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
+    const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
+    spriteLayer.appendChild(sheep2.element);
+    sprites.set('sheep2', sheep2);
+
+    // Add two black sheep at different locations
+    const darkSheep1 = new Sprite(200, 200, 'dark_wolf_spritesheet.png');
     spriteLayer.appendChild(darkSheep1.element);
     sprites.set('darkSheep1', darkSheep1);
+    
+    const darkSheep2 = new Sprite(800, 200, 'dark_wolf_spritesheet.png');
+    spriteLayer.appendChild(darkSheep2.element);
+    sprites.set('darkSheep2', darkSheep2);
 
     spriteLayer.style.transform = `scale(${currentZoom})`;
 
     setInterval(() => {
         const allSprites = Array.from(sprites.values());
+        const whiteSheep = [sheep1, sheep2];
+        const darkSheep = [darkSheep1, darkSheep2];
         
+        // White sheep fight each other in the middle
+        if (whiteSheep[0].health > 0 && whiteSheep[1].health > 0) {
+            whiteSheep[0].moveToward(whiteSheep[1].x, whiteSheep[1].y);
+            whiteSheep[1].moveToward(whiteSheep[0].x, whiteSheep[0].y);
+        }
+
+        // Dark sheep fight each other at their location
+        if (darkSheep[0].health > 0 && darkSheep[1].health > 0) {
+            darkSheep[0].moveToward(darkSheep[1].x, darkSheep[1].y);
+            darkSheep[1].moveToward(darkSheep[0].x, darkSheep[0].y);
+        }
+        
+        // Check for collisions and trigger headbutt
         allSprites.forEach(sprite => {
-            if (sprite.health <= 0) return; // Skip dead sprites
-            
-            // Find nearest living opponent
-            let nearestOpponent = null;
-            let minDistance = Infinity;
-            
-            allSprites.forEach(otherSprite => {
-                if (otherSprite !== sprite && otherSprite.health > 0) {
-                    const distance = Math.sqrt(
-                        Math.pow(sprite.x - otherSprite.x, 2) + 
-                        Math.pow(sprite.y - otherSprite.y, 2)
-                    );
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        nearestOpponent = otherSprite;
-                    }
-                }
-            });
-            
-            // Move toward nearest opponent if found
-            if (nearestOpponent) {
-                sprite.moveToward(nearestOpponent.x, nearestOpponent.y);
-            }
-            
-            // Check for collisions
             allSprites.forEach(otherSprite => {
                 if (sprite !== otherSprite && 
                     sprite.checkCollision(otherSprite) && 
@@ -305,7 +303,6 @@ class Sprite {
                     sprite.playAnimation('walk');
                 }
             });
-            
             sprite.update();
         });
     }, 50);
