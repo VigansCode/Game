@@ -127,104 +127,90 @@
     </div>
 
     <script>
-class Sprite {
-    constructor(x, y, spritesheet) {
-        this.x = x;
-        this.y = y;
-        this.health = 100;
-        this.element = document.createElement('div');
-        this.element.className = 'sprite';
-        this.element.style.backgroundImage = `url(${spritesheet})`;
-        this.direction = 'right'; // Add direction property
-        
-        // Create health bar
-        this.healthBarContainer = document.createElement('div');
-        this.healthBarContainer.className = 'health-bar';
-        this.healthBarFill = document.createElement('div');
-        this.healthBarFill.className = 'health-bar-fill';
-        this.healthBarContainer.appendChild(this.healthBarFill);
-        this.element.appendChild(this.healthBarContainer);
-        
-        this.animations = {
-    idle: { startFrame: 0, frames: 4 },
-    walk: { startFrame: 12, frames: 4 },  // Use the frames where they're facing up/down
-    headbutt: { startFrame: 16, frames: 4 }  // Use vertical headbutt frames
-};
-        
-        this.currentFrame = 0;
-        this.currentAnimation = 'idle';
-        this.isHeadbutting = false;
-        this.setPosition(x, y);
-    }
-
-    updateDirection(targetX) {
-    if (targetX > this.x) {
-        this.direction = 'right';
-        this.element.style.transform = 'scaleX(-1)';  // Flipped from original
-        this.healthBarContainer.style.transform = 'scaleX(-1)';
-    } else {
-        this.direction = 'left';
-        this.element.style.transform = 'scaleX(1)';   // Flipped from original
-        this.healthBarContainer.style.transform = 'scaleX(1)';
-    }
-}
-
-    setPosition(x, y) {
-        this.x = x;
-        this.y = y;
-        this.element.style.left = `${x}px`;
-        this.element.style.top = `${y}px`;
-    }
-
-    moveToward(targetX, targetY) {
-    const dx = targetX - this.x;
-    const dy = targetY - this.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    if (distance > 24) {  // Keep them 24 pixels apart
-        this.updateDirection(targetX);
-        const speed = 2;
-        const normalizedDx = (dx / distance) * speed;
-        const normalizedDy = (dy / distance) * speed;
-        this.setPosition(this.x + normalizedDx, this.y + normalizedDy);
-    }
-}
-
-checkCollision(otherSprite) {
-    const distance = Math.sqrt(
-        Math.pow(this.x - otherSprite.x, 2) + 
-        Math.pow(this.y - otherSprite.y, 2)
-    );
-    return distance < 24;  // Changed to 24 for closer interaction
-}
-
-performHeadbutt(otherSprite) {
-    if (!this.isHeadbutting && this.health > 0) {
-        this.isHeadbutting = true;
-        this.updateDirection(otherSprite.x);
-        this.playAnimation('headbutt');
-        
-        // Move slightly towards opponent during headbutt
-        const originalX = this.x;
-        if (this.direction === 'right') {
-            this.setPosition(this.x + 8, this.y);
-        } else {
-            this.setPosition(this.x - 8, this.y);
-        }
-        
-        // Deal damage
-        const damage = Math.random() * 10 + 5;
-        otherSprite.takeDamage(damage);
-        
-        setTimeout(() => {
-            this.isHeadbutting = false;
-            this.setPosition(originalX, this.y);  // Return to original position
-            if (this.health > 0) {
-                this.playAnimation('idle');
+        class Sprite {
+            constructor(x, y, spritesheet) {
+                this.x = x;
+                this.y = y;
+                this.health = 100;
+                this.element = document.createElement('div');
+                this.element.className = 'sprite';
+                this.element.style.backgroundImage = `url(${spritesheet})`;
+                
+                // Create health bar
+                this.healthBarContainer = document.createElement('div');
+                this.healthBarContainer.className = 'health-bar';
+                this.healthBarFill = document.createElement('div');
+                this.healthBarFill.className = 'health-bar-fill';
+                this.healthBarContainer.appendChild(this.healthBarFill);
+                this.element.appendChild(this.healthBarContainer);
+                
+                this.animations = {
+                    idle: { startFrame: 0, frames: 4 },
+                    walk: { startFrame: 4, frames: 4 },
+                    headbutt: { startFrame: 8, frames: 4 }
+                };
+                
+                this.currentFrame = 0;
+                this.currentAnimation = 'idle';
+                this.isHeadbutting = false;
+                this.setPosition(x, y);
             }
-        }, 400);
-    }
-}
+
+            setPosition(x, y) {
+                this.x = x;
+                this.y = y;
+                this.element.style.left = `${x}px`;
+                this.element.style.top = `${y}px`;
+            }
+
+            moveToward(targetX, targetY) {
+                const dx = targetX - this.x;
+                const dy = targetY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    const speed = 2;
+                    const normalizedDx = (dx / distance) * speed;
+                    const normalizedDy = (dy / distance) * speed;
+                    this.setPosition(this.x + normalizedDx, this.y + normalizedDy);
+                }
+            }
+
+            takeDamage(amount) {
+                this.health = Math.max(0, this.health - amount);
+                this.healthBarFill.style.width = `${this.health}%`;
+                
+                if (this.health <= 0) {
+                    this.playAnimation('idle');
+                    this.element.style.opacity = '0.5';
+                }
+            }
+
+            checkCollision(otherSprite) {
+                const distance = Math.sqrt(
+                    Math.pow(this.x - otherSprite.x, 2) + 
+                    Math.pow(this.y - otherSprite.y, 2)
+                );
+                return distance < 32;
+            }
+
+            performHeadbutt(otherSprite) {
+                if (!this.isHeadbutting && this.health > 0) {
+                    this.isHeadbutting = true;
+                    this.playAnimation('headbutt');
+                    
+                    // Deal damage
+                    const damage = Math.random() * 10 + 5; // Random damage between 5-15
+                    otherSprite.takeDamage(damage);
+                    
+                    setTimeout(() => {
+                        this.isHeadbutting = false;
+                        if (this.health > 0) {
+                            this.playAnimation('idle');
+                        }
+                    }, 400);
+                }
+            }
 
             playAnimation(animationName) {
                 if (this.animations[animationName] && (!this.isHeadbutting || animationName === 'headbutt')) {
@@ -259,8 +245,8 @@ performHeadbutt(otherSprite) {
     const mapCanvas = document.getElementById('mapCanvas');
     
     // Fighting pair
-    const sheep1 = new Sprite(470, 400, 'wolf_spritesheet.png');
-    const darkWolf = new Sprite(494, 400, 'dark_wolf_spritesheet.png');
+    const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
+    const darkWolf = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
     
     // Peaceful pair
     const sheep2 = new Sprite(200, 200, 'wolf_spritesheet.png');
