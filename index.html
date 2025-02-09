@@ -241,44 +241,56 @@
         const ZOOM_SPEED = 0.1;
 
         function initSprites() {
-            const spriteLayer = document.getElementById('spriteLayer');
-            const mapCanvas = document.getElementById('mapCanvas');
-            
-            const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
-            spriteLayer.appendChild(sheep1.element);
-            sprites.set('sheep1', sheep1);
-            
-            const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
-            spriteLayer.appendChild(sheep2.element);
-            sprites.set('sheep2', sheep2);
-
-            spriteLayer.style.transform = `scale(${currentZoom})`;
-
-            setInterval(() => {
-                const sheepArray = Array.from(sprites.values());
-                
-                // Move sheep toward each other if both are alive
-                if (sheepArray[0].health > 0 && sheepArray[1].health > 0) {
-                    sheepArray[0].moveToward(sheepArray[1].x, sheepArray[1].y);
-                    sheepArray[1].moveToward(sheepArray[0].x, sheepArray[0].y);
-                }
-                
-                // Check for collisions and trigger headbutt
-                sheepArray.forEach(sheep => {
-                    sheepArray.forEach(otherSheep => {
-                        if (sheep !== otherSheep && 
-                            sheep.checkCollision(otherSheep) && 
-                            sheep.health > 0 && 
-                            otherSheep.health > 0) {
-                            sheep.performHeadbutt(otherSheep);
-                        } else if (!sheep.isHeadbutting && sheep.health > 0) {
-                            sheep.playAnimation('walk');
-                        }
-                    });
-                    sheep.update();
-                });
-            }, 50);
+    const spriteLayer = document.getElementById('spriteLayer');
+    const mapCanvas = document.getElementById('mapCanvas');
+    
+    // Fighting pair
+    const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
+    const darkWolf = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
+    
+    // Peaceful pair
+    const sheep2 = new Sprite(200, 200, 'wolf_spritesheet.png');
+    const darkWolf2 = new Sprite(240, 200, 'dark_wolf_spritesheet.png');
+    
+    // Add all sprites to the layer
+    spriteLayer.appendChild(sheep1.element);
+    spriteLayer.appendChild(darkWolf.element);
+    spriteLayer.appendChild(sheep2.element);
+    spriteLayer.appendChild(darkWolf2.element);
+    
+    // Store sprites with unique identifiers
+    sprites.set('fighter_sheep', sheep1);
+    sprites.set('fighter_dark', darkWolf);
+    sprites.set('peaceful_sheep', sheep2);
+    sprites.set('peaceful_dark', darkWolf2);
+    
+    spriteLayer.style.transform = `scale(${currentZoom})`;
+    
+    // Battle logic for fighting pair
+    setInterval(() => {
+        const fighter1 = sprites.get('fighter_sheep');
+        const fighter2 = sprites.get('fighter_dark');
+        
+        if (fighter1.checkCollision(fighter2)) {
+            fighter1.performHeadbutt(fighter2);
+            fighter2.performHeadbutt(fighter1);
+        } else {
+            fighter1.moveToward(fighter2.x, fighter2.y);
+            fighter2.moveToward(fighter1.x, fighter1.y);
+            fighter1.playAnimation('walk');
+            fighter2.playAnimation('walk');
         }
+        
+        // Peaceful pair just idles
+        const peaceful1 = sprites.get('peaceful_sheep');
+        const peaceful2 = sprites.get('peaceful_dark');
+        peaceful1.playAnimation('idle');
+        peaceful2.playAnimation('idle');
+        
+        // Update all sprites
+        sprites.forEach(sprite => sprite.update());
+    }, 50);
+}
 
         function handleMouseDown(e) {
             isDragging = true;
