@@ -251,44 +251,65 @@ class Sprite {
         const ZOOM_SPEED = 0.1;
 
         function initSprites() {
-            const spriteLayer = document.getElementById('spriteLayer');
-            const mapCanvas = document.getElementById('mapCanvas');
-            
-            const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
-            spriteLayer.appendChild(sheep1.element);
-            sprites.set('sheep1', sheep1);
-            
-            const sheep2 = new Sprite(550, 400, 'wolf_spritesheet.png');
-            spriteLayer.appendChild(sheep2.element);
-            sprites.set('sheep2', sheep2);
+    const spriteLayer = document.getElementById('spriteLayer');
+    const mapCanvas = document.getElementById('mapCanvas');
+    
+    // Create regular sheep
+    const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
+    spriteLayer.appendChild(sheep1.element);
+    sprites.set('sheep1', sheep1);
+    
+    // Create dark sheep
+    const darkSheep1 = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
+    spriteLayer.appendChild(darkSheep1.element);
+    sprites.set('darkSheep1', darkSheep1);
 
-            spriteLayer.style.transform = `scale(${currentZoom})`;
+    spriteLayer.style.transform = `scale(${currentZoom})`;
 
-            setInterval(() => {
-                const sheepArray = Array.from(sprites.values());
-                
-                // Move sheep toward each other if both are alive
-                if (sheepArray[0].health > 0 && sheepArray[1].health > 0) {
-                    sheepArray[0].moveToward(sheepArray[1].x, sheepArray[1].y);
-                    sheepArray[1].moveToward(sheepArray[0].x, sheepArray[0].y);
+    setInterval(() => {
+        const allSprites = Array.from(sprites.values());
+        
+        allSprites.forEach(sprite => {
+            if (sprite.health <= 0) return; // Skip dead sprites
+            
+            // Find nearest living opponent
+            let nearestOpponent = null;
+            let minDistance = Infinity;
+            
+            allSprites.forEach(otherSprite => {
+                if (otherSprite !== sprite && otherSprite.health > 0) {
+                    const distance = Math.sqrt(
+                        Math.pow(sprite.x - otherSprite.x, 2) + 
+                        Math.pow(sprite.y - otherSprite.y, 2)
+                    );
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestOpponent = otherSprite;
+                    }
                 }
-                
-                // Check for collisions and trigger headbutt
-                sheepArray.forEach(sheep => {
-                    sheepArray.forEach(otherSheep => {
-                        if (sheep !== otherSheep && 
-                            sheep.checkCollision(otherSheep) && 
-                            sheep.health > 0 && 
-                            otherSheep.health > 0) {
-                            sheep.performHeadbutt(otherSheep);
-                        } else if (!sheep.isHeadbutting && sheep.health > 0) {
-                            sheep.playAnimation('walk');
-                        }
-                    });
-                    sheep.update();
-                });
-            }, 50);
-        }
+            });
+            
+            // Move toward nearest opponent if found
+            if (nearestOpponent) {
+                sprite.moveToward(nearestOpponent.x, nearestOpponent.y);
+            }
+            
+            // Check for collisions
+            allSprites.forEach(otherSprite => {
+                if (sprite !== otherSprite && 
+                    sprite.checkCollision(otherSprite) && 
+                    sprite.health > 0 && 
+                    otherSprite.health > 0) {
+                    sprite.performHeadbutt(otherSprite);
+                } else if (!sprite.isHeadbutting && sprite.health > 0) {
+                    sprite.playAnimation('walk');
+                }
+            });
+            
+            sprite.update();
+        });
+    }, 50);
+}
 
         function handleMouseDown(e) {
             isDragging = true;
