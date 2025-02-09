@@ -254,21 +254,21 @@ class Sprite {
     const spriteLayer = document.getElementById('spriteLayer');
     const mapCanvas = document.getElementById('mapCanvas');
     
-    // First battle pair (middle of the map)
+    // First battle pair (in center area)
     const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
     spriteLayer.appendChild(sheep1.element);
     sprites.set('sheep1', sheep1);
     
-    const darkSheep1 = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
+    const darkSheep1 = new Sprite(450, 450, 'dark_wolf_spritesheet.png');
     spriteLayer.appendChild(darkSheep1.element);
     sprites.set('darkSheep1', darkSheep1);
 
-    // Second battle pair (up on the map)
-    const sheep2 = new Sprite(450, 200, 'wolf_spritesheet.png');
+    // Second battle pair (near pathway/crystals area)
+    const sheep2 = new Sprite(200, 200, 'wolf_spritesheet.png');
     spriteLayer.appendChild(sheep2.element);
     sprites.set('sheep2', sheep2);
     
-    const darkSheep2 = new Sprite(550, 200, 'dark_wolf_spritesheet.png');
+    const darkSheep2 = new Sprite(200, 250, 'dark_wolf_spritesheet.png');
     spriteLayer.appendChild(darkSheep2.element);
     sprites.set('darkSheep2', darkSheep2);
 
