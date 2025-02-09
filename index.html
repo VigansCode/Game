@@ -175,28 +175,18 @@ class Sprite {
     }
 
     moveToward(targetX, targetY) {
-        const dx = targetX - this.x;
-        const dy = targetY - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance > 0) {
-            this.updateDirection(targetX); // Update direction when moving
-            const speed = 2;
-            const normalizedDx = (dx / distance) * speed;
-            const normalizedDy = (dy / distance) * speed;
-            this.setPosition(this.x + normalizedDx, this.y + normalizedDy);
-        }
+    const dx = targetX - this.x;
+    const dy = targetY - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > 32) { // Stop when within attack range
+        this.updateDirection(targetX);
+        const speed = 2;
+        const normalizedDx = (dx / distance) * speed;
+        const normalizedDy = (dy / distance) * speed;
+        this.setPosition(this.x + normalizedDx, this.y + normalizedDy);
     }
-
-    takeDamage(amount) {
-        this.health = Math.max(0, this.health - amount);
-        this.healthBarFill.style.width = `${this.health}%`;
-        
-        if (this.health <= 0) {
-            this.playAnimation('idle');
-            this.element.style.opacity = '0.5';
-        }
-    }
+}
 
     checkCollision(otherSprite) {
         const distance = Math.sqrt(
