@@ -158,14 +158,16 @@ class Sprite {
     }
 
     updateDirection(targetX) {
-        if (targetX > this.x) {
-            this.direction = 'right';
-            this.element.style.transform = 'scaleX(1)';
-        } else {
-            this.direction = 'left';
-            this.element.style.transform = 'scaleX(-1)';
-        }
+    if (targetX > this.x) {
+        this.direction = 'right';
+        this.element.style.transform = 'scaleX(-1)';  // Flipped from original
+        this.healthBarContainer.style.transform = 'scaleX(-1)';
+    } else {
+        this.direction = 'left';
+        this.element.style.transform = 'scaleX(1)';   // Flipped from original
+        this.healthBarContainer.style.transform = 'scaleX(1)';
     }
+}
 
     setPosition(x, y) {
         this.x = x;
