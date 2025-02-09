@@ -181,7 +181,7 @@ class Sprite {
     const dy = targetY - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    if (distance > 16) {  // Reduced from 32 to make them get closer
+    if (distance > 8) {  // Stop closer to opponent
         this.updateDirection(targetX);
         const speed = 2;
         const normalizedDx = (dx / distance) * speed;
@@ -195,27 +195,36 @@ checkCollision(otherSprite) {
         Math.pow(this.x - otherSprite.x, 2) + 
         Math.pow(this.y - otherSprite.y, 2)
     );
-    return distance < 16;  // Reduced from 32 to make them get closer
+    return distance < 8;  // Make them get even closer
 }
 
-    performHeadbutt(otherSprite) {
-        if (!this.isHeadbutting && this.health > 0) {
-            this.updateDirection(otherSprite.x); // Update direction before headbutt
-            this.isHeadbutting = true;
-            this.playAnimation('headbutt');
-            
-            // Deal damage
-            const damage = Math.random() * 10 + 5; // Random damage between 5-15
-            otherSprite.takeDamage(damage);
-            
-            setTimeout(() => {
-                this.isHeadbutting = false;
-                if (this.health > 0) {
-                    this.playAnimation('idle');
-                }
-            }, 400);
+performHeadbutt(otherSprite) {
+    if (!this.isHeadbutting && this.health > 0) {
+        this.isHeadbutting = true;
+        this.updateDirection(otherSprite.x);
+        this.playAnimation('headbutt');
+        
+        // Move slightly towards opponent during headbutt
+        const originalX = this.x;
+        if (this.direction === 'right') {
+            this.setPosition(this.x + 8, this.y);
+        } else {
+            this.setPosition(this.x - 8, this.y);
         }
+        
+        // Deal damage
+        const damage = Math.random() * 10 + 5;
+        otherSprite.takeDamage(damage);
+        
+        setTimeout(() => {
+            this.isHeadbutting = false;
+            this.setPosition(originalX, this.y);  // Return to original position
+            if (this.health > 0) {
+                this.playAnimation('idle');
+            }
+        }, 400);
     }
+}
 
             playAnimation(animationName) {
                 if (this.animations[animationName] && (!this.isHeadbutting || animationName === 'headbutt')) {
