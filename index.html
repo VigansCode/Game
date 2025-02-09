@@ -181,7 +181,7 @@ class Sprite {
     const dy = targetY - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    if (distance > 8) {  // Stop closer to opponent
+    if (distance > 24) {  // Keep them 24 pixels apart
         this.updateDirection(targetX);
         const speed = 2;
         const normalizedDx = (dx / distance) * speed;
@@ -195,7 +195,7 @@ checkCollision(otherSprite) {
         Math.pow(this.x - otherSprite.x, 2) + 
         Math.pow(this.y - otherSprite.y, 2)
     );
-    return distance < 8;  // Make them get even closer
+    return distance < 24;  // Changed to 24 for closer interaction
 }
 
 performHeadbutt(otherSprite) {
@@ -259,8 +259,8 @@ performHeadbutt(otherSprite) {
     const mapCanvas = document.getElementById('mapCanvas');
     
     // Fighting pair
-    const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
-    const darkWolf = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
+    const sheep1 = new Sprite(470, 400, 'wolf_spritesheet.png');
+    const darkWolf = new Sprite(494, 400, 'dark_wolf_spritesheet.png');
     
     // Peaceful pair
     const sheep2 = new Sprite(200, 200, 'wolf_spritesheet.png');
