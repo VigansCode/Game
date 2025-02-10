@@ -283,18 +283,38 @@
         
 
 // Random movement for peaceful pair
-        const peaceful1 = sprites.get('peaceful_sheep');
+const peaceful1 = sprites.get('peaceful_sheep');
         const peaceful2 = sprites.get('peaceful_dark');
         
         // Update movement every 2 seconds
         if (!peaceful1.nextMove || Date.now() > peaceful1.nextMove) {
-            peaceful1.targetX = Math.random() * 800;
-            peaceful1.targetY = Math.random() * 600;
+            // Keep away from the center fight area (450,400)
+            let newX = Math.random() * 800;
+            let newY = Math.random() * 600;
+            
+            // Avoid center area
+            while (Math.abs(newX - 450) < 100 && Math.abs(newY - 400) < 100) {
+                newX = Math.random() * 800;
+                newY = Math.random() * 600;
+            }
+            
+            peaceful1.targetX = newX;
+            peaceful1.targetY = newY;
             peaceful1.nextMove = Date.now() + 2000;
         }
         if (!peaceful2.nextMove || Date.now() > peaceful2.nextMove) {
-            peaceful2.targetX = Math.random() * 800;
-            peaceful2.targetY = Math.random() * 600;
+            // Keep away from the center fight area
+            let newX = Math.random() * 800;
+            let newY = Math.random() * 600;
+            
+            // Avoid center area
+            while (Math.abs(newX - 450) < 100 && Math.abs(newY - 400) < 100) {
+                newX = Math.random() * 800;
+                newY = Math.random() * 600;
+            }
+            
+            peaceful2.targetX = newX;
+            peaceful2.targetY = newY;
             peaceful2.nextMove = Date.now() + 2000;
         }
 
