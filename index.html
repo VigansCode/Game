@@ -249,8 +249,11 @@
     const darkWolf = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
     
 // Update peaceful pair starting positions
-const sheep2 = new Sprite(450, 300, 'wolf_spritesheet.png');    
-const darkWolf2 = new Sprite(550, 300, 'dark_wolf_spritesheet.png');
+const sheep2 = new Sprite(350, 400, 'wolf_spritesheet.png');    // White sheep left
+const darkWolf2 = new Sprite(650, 200, 'dark_wolf_spritesheet.png');  // Black sheep top right
+
+sheep2.healthBarContainer.style.display = 'none';
+darkWolf2.healthBarContainer.style.display = 'none';
     
     // Add all sprites to the layer
     spriteLayer.appendChild(sheep1.element);
@@ -327,15 +330,15 @@ const darkWolf2 = new Sprite(550, 300, 'dark_wolf_spritesheet.png');
                 const newY = peaceful1.y + (dy / distance) * speed;
                 
                 const isBlocked = (
-    (newX < 400 || newX > 600) || // Keep in lower area
-    (newY < 250 || newY > 350) || // Below fighting pair
-    (newX > 450 && newX < 550 && newY < 300) // Avoid obstacles
-);
+        (newX < 300 || newX > 700) || // Wider area
+        (newY < 150 || newY > 450) || // Height bounds
+        (newX > 300 && newX < 400 && newY < 300) // Trees/obstacles
+    );
                 
-                if (!isBlocked) {
-                    peaceful1.setPosition(newX, newY);
-                }
-            }
+    if (!isBlocked) {
+        peaceful1.setPosition(newX, newY);
+    }
+}
             peaceful1.playAnimation('walk');
         } else {
             peaceful1.playAnimation('idle');
