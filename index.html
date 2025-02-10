@@ -288,9 +288,11 @@ const peaceful1 = sprites.get('peaceful_sheep');
         
         // Update movement every 2 seconds
         if (!peaceful1.nextMove || Date.now() > peaceful1.nextMove) {
-            // Keep away from the center fight area (450,400)
-            let newX = Math.random() * 800;
-            let newY = Math.random() * 600;
+    let newX = Math.random() * 300; // Restrict to left side
+    let newY = Math.random() * 600;
+    peaceful1.targetX = newX;
+    peaceful1.targetY = newY;
+    peaceful1.nextMove = Date.now() + 3000; // Longer delay between moves
             
             // Avoid center area
             while (Math.abs(newX - 450) < 100 && Math.abs(newY - 400) < 100) {
@@ -303,9 +305,11 @@ const peaceful1 = sprites.get('peaceful_sheep');
             peaceful1.nextMove = Date.now() + 2000;
         }
         if (!peaceful2.nextMove || Date.now() > peaceful2.nextMove) {
-            // Keep away from the center fight area
-            let newX = Math.random() * 800;
-            let newY = Math.random() * 600;
+    let newX = Math.random() * 300;
+    let newY = Math.random() * 600;
+    peaceful2.targetX = newX;
+    peaceful2.targetY = newY;
+    peaceful2.nextMove = Date.now() + 3000;
             
             // Avoid center area
             while (Math.abs(newX - 450) < 100 && Math.abs(newY - 400) < 100) {
@@ -320,7 +324,7 @@ const peaceful1 = sprites.get('peaceful_sheep');
 
 // Move towards target for peaceful NPCs with slower speed
 if (Math.abs(peaceful1.x - peaceful1.targetX) > 2 || Math.abs(peaceful1.y - peaceful1.targetY) > 2) {
-    const speed = 0.3;
+    const speed = 0.1; // Reduced from 0.3
     const dx = peaceful1.targetX - peaceful1.x;
     const dy = peaceful1.targetY - peaceful1.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
