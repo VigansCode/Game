@@ -249,8 +249,8 @@
     const darkWolf = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
     
 // Update peaceful pair starting positions
-const sheep2 = new Sprite(300, 200, 'wolf_spritesheet.png');    
-const darkWolf2 = new Sprite(350, 200, 'dark_wolf_spritesheet.png');
+const sheep2 = new Sprite(450, 300, 'wolf_spritesheet.png');    
+const darkWolf2 = new Sprite(550, 300, 'dark_wolf_spritesheet.png');
     
     // Add all sprites to the layer
     spriteLayer.appendChild(sheep1.element);
@@ -327,9 +327,9 @@ const darkWolf2 = new Sprite(350, 200, 'dark_wolf_spritesheet.png');
                 const newY = peaceful1.y + (dy / distance) * speed;
                 
                 const isBlocked = (
-    (newX < 250 || newX > 400) || // Restrict to area shown
-    (newY < 150 || newY > 250) || // Restrict vertical movement
-    (newX > 300 && newX < 350 && newY < 200) // Avoid objects
+    (newX < 400 || newX > 600) || // Keep in lower area
+    (newY < 250 || newY > 350) || // Below fighting pair
+    (newX > 450 && newX < 550 && newY < 300) // Avoid obstacles
 );
                 
                 if (!isBlocked) {
