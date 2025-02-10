@@ -317,7 +317,7 @@ const darkWolf2 = new Sprite(550, 300, 'dark_wolf_spritesheet.png');
 
         // Movement for peaceful NPCs with terrain restrictions
         if (Math.abs(peaceful1.x - peaceful1.targetX) > 2 || Math.abs(peaceful1.y - peaceful1.targetY) > 2) {
-            const speed = 0.5;
+            const speed = 0.8;
             const dx = peaceful1.targetX - peaceful1.x;
             const dy = peaceful1.targetY - peaceful1.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
@@ -342,7 +342,7 @@ const darkWolf2 = new Sprite(550, 300, 'dark_wolf_spritesheet.png');
         }
 
         if (Math.abs(peaceful2.x - peaceful2.targetX) > 2 || Math.abs(peaceful2.y - peaceful2.targetY) > 2) {
-            const speed = 0.5;
+            const speed = 0.8;
             const dx = peaceful2.targetX - peaceful2.x;
             const dy = peaceful2.targetY - peaceful2.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
