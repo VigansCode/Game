@@ -249,15 +249,8 @@
     const darkWolf = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
     
 // Update peaceful pair starting positions
-const sheep2 = new Sprite(350, 500, 'wolf_spritesheet.png');
-const darkWolf2 = new Sprite(550, 600, 'dark_wolf_spritesheet.png');
-
-// Hide health bars
-sheep2.healthBarContainer.style.display = 'none';
-darkWolf2.healthBarContainer.style.display = 'none';
-
-// Add all sprites to the layer
-spriteLayer.appendChild(sheep1.element);
+const sheep2 = new Sprite(450, 300, 'wolf_spritesheet.png');    
+const darkWolf2 = new Sprite(550, 300, 'dark_wolf_spritesheet.png');
     
     // Add all sprites to the layer
     spriteLayer.appendChild(sheep1.element);
@@ -324,7 +317,7 @@ spriteLayer.appendChild(sheep1.element);
 
         // Movement for peaceful NPCs with terrain restrictions
         if (Math.abs(peaceful1.x - peaceful1.targetX) > 2 || Math.abs(peaceful1.y - peaceful1.targetY) > 2) {
-            const speed = 0.1;
+            const speed = 0.5;
             const dx = peaceful1.targetX - peaceful1.x;
             const dy = peaceful1.targetY - peaceful1.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
@@ -334,9 +327,9 @@ spriteLayer.appendChild(sheep1.element);
                 const newY = peaceful1.y + (dy / distance) * speed;
                 
                 const isBlocked = (
-   (newX < 300 || newX > 600) || // Keep in lower-left to right area
-   (newY < 450 || newY > 650) || // Lower area bounds
-   (newX > 450 && newX < 550 && newY < 500) // Avoid obstacles
+    (newX < 400 || newX > 600) || // Keep in lower area
+    (newY < 250 || newY > 350) || // Below fighting pair
+    (newX > 450 && newX < 550 && newY < 300) // Avoid obstacles
 );
                 
                 if (!isBlocked) {
@@ -349,7 +342,7 @@ spriteLayer.appendChild(sheep1.element);
         }
 
         if (Math.abs(peaceful2.x - peaceful2.targetX) > 2 || Math.abs(peaceful2.y - peaceful2.targetY) > 2) {
-            const speed = 0.1;
+            const speed = 0.5;
             const dx = peaceful2.targetX - peaceful2.x;
             const dy = peaceful2.targetY - peaceful2.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
