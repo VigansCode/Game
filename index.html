@@ -127,120 +127,145 @@
     </div>
 
     <script>
-        class Sprite {
-            constructor(x, y, spritesheet) {
-                this.x = x;
-                this.y = y;
-                this.health = 100;
-                this.element = document.createElement('div');
-                this.element.className = 'sprite';
-                this.element.style.backgroundImage = `url(${spritesheet})`;
-                
-                // Create health bar
-                this.healthBarContainer = document.createElement('div');
-                this.healthBarContainer.className = 'health-bar';
-                this.healthBarFill = document.createElement('div');
-                this.healthBarFill.className = 'health-bar-fill';
-                this.healthBarContainer.appendChild(this.healthBarFill);
-                this.element.appendChild(this.healthBarContainer);
-                
-                this.animations = {
-                    idle: { startFrame: 0, frames: 4 },
-                    walk: { startFrame: 4, frames: 4 },
-                    headbutt: { startFrame: 8, frames: 4 }
-                };
-                
-                this.currentFrame = 0;
-                this.currentAnimation = 'idle';
-                this.isHeadbutting = false;
-                this.setPosition(x, y);
-            }
+class Sprite {
+    constructor(x, y, spritesheet) {
+        this.x = x;
+        this.y = y;
+        this.health = 100;
+        this.element = document.createElement('div');
+        this.element.className = 'sprite';
+        this.element.style.backgroundImage = `url(${spritesheet})`;
+        
+        // Create health bar
+        this.healthBarContainer = document.createElement('div');
+        this.healthBarContainer.className = 'health-bar';
+        this.healthBarFill = document.createElement('div');
+        this.healthBarFill.className = 'health-bar-fill';
+        this.healthBarContainer.appendChild(this.healthBarFill);
+        this.element.appendChild(this.healthBarContainer);
+        
+        this.animations = {
+            idle: { startFrame: 0, frames: 4 },
+            walk: { startFrame: 4, frames: 4 },
+            headbutt: { startFrame: 8, frames: 4 }
+        };
+        
+        this.currentFrame = 0;
+        this.currentAnimation = 'idle';
+        this.isHeadbutting = false;
+        this.setPosition(x, y);
+    }
 
-            setPosition(x, y) {
-                this.x = x;
-                this.y = y;
-                this.element.style.left = `${x}px`;
-                this.element.style.top = `${y}px`;
-            }
+    setPosition(x, y) {
+        this.x = x;
+        this.y = y;
+        this.element.style.left = `${x}px`;
+        this.element.style.top = `${y}px`;
+    }
 
-            moveToward(targetX, targetY) {
-                const dx = targetX - this.x;
-                const dy = targetY - this.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance > 0) {
-                    const speed = 2;
-                    const normalizedDx = (dx / distance) * speed;
-                    const normalizedDy = (dy / distance) * speed;
-                    this.setPosition(this.x + normalizedDx, this.y + normalizedDy);
-                }
-            }
-
-            takeDamage(amount) {
-                this.health = Math.max(0, this.health - amount);
-                this.healthBarFill.style.width = `${this.health}%`;
-                
-                if (this.health <= 0) {
-                    this.playAnimation('idle');
-                    this.element.style.opacity = '0.5';
-                }
-            }
-
-            checkCollision(otherSprite) {
-                const distance = Math.sqrt(
-                    Math.pow(this.x - otherSprite.x, 2) + 
-                    Math.pow(this.y - otherSprite.y, 2)
-                );
-                return distance < 32;
-            }
-
-            performHeadbutt(otherSprite) {
-                if (!this.isHeadbutting && this.health > 0) {
-                    this.isHeadbutting = true;
-                    this.playAnimation('headbutt');
-                    
-                    // Deal damage
-                    const damage = Math.random() * 10 + 5; // Random damage between 5-15
-                    otherSprite.takeDamage(damage);
-                    
-                    setTimeout(() => {
-                        this.isHeadbutting = false;
-                        if (this.health > 0) {
-                            this.playAnimation('idle');
-                        }
-                    }, 400);
-                }
-            }
-
-            playAnimation(animationName) {
-                if (this.animations[animationName] && (!this.isHeadbutting || animationName === 'headbutt')) {
-                    this.currentAnimation = animationName;
-                    const animation = this.animations[animationName];
-                    const frameIndex = animation.startFrame + (this.currentFrame % animation.frames);
-                    const col = frameIndex % 4;
-                    const row = Math.floor(frameIndex / 4);
-                    
-                    this.element.style.backgroundPosition = `-${col * 32}px -${row * 32}px`;
-                }
-            }
-
-            update() {
-                this.currentFrame++;
-                this.playAnimation(this.currentAnimation);
-            }
+    moveToward(targetX, targetY) {
+        const dx = targetX - this.x;
+        const dy = targetY - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 0) {
+            const speed = 2;
+            const normalizedDx = (dx / distance) * speed;
+            const normalizedDy = (dy / distance) * speed;
+            this.setPosition(this.x + normalizedDx, this.y + normalizedDy);
         }
+    }
 
-        let gameState = null;
-        let sprites = new Map();
-        const MOVE_AMOUNT = 50;
-        let isDragging = false;
-        let startX, startY, scrollLeft, scrollTop;
-        let currentZoom = 2;
-        const MIN_ZOOM = 2;
-        const MAX_ZOOM = 4;
-        const ZOOM_SPEED = 0.1;
+    takeDamage(amount) {
+        this.health = Math.max(0, this.health - amount);
+        this.healthBarFill.style.width = `${this.health}%`;
+        
+        if (this.health <= 0) {
+            this.playAnimation('idle');
+            this.element.style.opacity = '0.5';
+        }
+    }
 
-        function initSprites() {
+    checkCollision(otherSprite) {
+        const distance = Math.sqrt(
+            Math.pow(this.x - otherSprite.x, 2) + 
+            Math.pow(this.y - otherSprite.y, 2)
+        );
+        return distance < 32;
+    }
+
+    performHeadbutt(otherSprite) {
+        if (!this.isHeadbutting && this.health > 0) {
+            this.isHeadbutting = true;
+            this.playAnimation('headbutt');
+            
+            // Deal damage
+            const damage = Math.random() * 10 + 5; // Random damage between 5-15
+            otherSprite.takeDamage(damage);
+            
+            setTimeout(() => {
+                this.isHeadbutting = false;
+                if (this.health > 0) {
+                    this.playAnimation('idle');
+                }
+            }, 400);
+        }
+    }
+
+    playAnimation(animationName) {
+        if (this.animations[animationName] && (!this.isHeadbutting || animationName === 'headbutt')) {
+            this.currentAnimation = animationName;
+            const animation = this.animations[animationName];
+            const frameIndex = animation.startFrame + (this.currentFrame % animation.frames);
+            const col = frameIndex % 4;
+            const row = Math.floor(frameIndex / 4);
+            
+            this.element.style.backgroundPosition = `-${col * 32}px -${row * 32}px`;
+        }
+    }
+
+    update() {
+        this.currentFrame++;
+        this.playAnimation(this.currentAnimation);
+    }
+
+    wander() {
+        if (!this.wanderTarget || this.hasReachedTarget()) {
+            this.setNewWanderTarget();
+        }
+        
+        this.moveToward(this.wanderTarget.x, this.wanderTarget.y);
+        this.playAnimation('walk');
+    }
+
+    setNewWanderTarget() {
+        const mapWidth = 800;  // Adjust based on your map size
+        const mapHeight = 600;
+        const wanderRadius = 100;
+        
+        // Generate a random point within wanderRadius of current position
+        this.wanderTarget = {
+            x: this.x + (Math.random() * 2 - 1) * wanderRadius,
+            y: this.y + (Math.random() * 2 - 1) * wanderRadius
+        };
+        
+        // Keep within map bounds
+        this.wanderTarget.x = Math.max(0, Math.min(mapWidth, this.wanderTarget.x));
+        this.wanderTarget.y = Math.max(0, Math.min(mapHeight, this.wanderTarget.y));
+    }
+
+    hasReachedTarget() {
+        if (!this.wanderTarget) return true;
+        
+        const dx = this.wanderTarget.x - this.x;
+        const dy = this.wanderTarget.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        return distance < 5;
+    }
+}
+
+function initSprites() {
     const spriteLayer = document.getElementById('spriteLayer');
     const mapCanvas = document.getElementById('mapCanvas');
     
@@ -266,7 +291,7 @@
     
     spriteLayer.style.transform = `scale(${currentZoom})`;
     
-    // Battle logic for fighting pair
+    // Battle and wandering logic
     setInterval(() => {
         const fighter1 = sprites.get('fighter_sheep');
         const fighter2 = sprites.get('fighter_dark');
@@ -281,11 +306,11 @@
             fighter2.playAnimation('walk');
         }
         
-        // Peaceful pair just idles
+        // Peaceful pair wandering
         const peaceful1 = sprites.get('peaceful_sheep');
         const peaceful2 = sprites.get('peaceful_dark');
-        peaceful1.playAnimation('idle');
-        peaceful2.playAnimation('idle');
+        peaceful1.wander();
+        peaceful2.wander();
         
         // Update all sprites
         sprites.forEach(sprite => sprite.update());
