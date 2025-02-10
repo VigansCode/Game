@@ -318,20 +318,59 @@ const peaceful1 = sprites.get('peaceful_sheep');
             peaceful2.nextMove = Date.now() + 2000;
         }
 
-        // Move towards target
-        if (Math.abs(peaceful1.x - peaceful1.targetX) > 2 || Math.abs(peaceful1.y - peaceful1.targetY) > 2) {
-            peaceful1.moveToward(peaceful1.targetX, peaceful1.targetY);
-            peaceful1.playAnimation('walk');
-        } else {
-            peaceful1.playAnimation('idle');
-        }
+// Move towards target for peaceful NPCs with slower speed
+if (Math.abs(peaceful1.x - peaceful1.targetX) > 2 || Math.abs(peaceful1.y - peaceful1.targetY) > 2) {
+    const speed = 0.3;
+    const dx = peaceful1.targetX - peaceful1.x;
+    const dy = peaceful1.targetY - peaceful1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > 0) {
+        const newX = peaceful1.x + (dx / distance) * speed;
+        const newY = peaceful1.y + (dy / distance) * speed;
         
-        if (Math.abs(peaceful2.x - peaceful2.targetX) > 2 || Math.abs(peaceful2.y - peaceful2.targetY) > 2) {
-            peaceful2.moveToward(peaceful2.targetX, peaceful2.targetY);
-            peaceful2.playAnimation('walk');
-        } else {
-            peaceful2.playAnimation('idle');
+        // Check for obstacles and boundaries
+        const isNearObstacle = (
+            (newX > 300 && newX < 600 && newY > 100 && newY < 300) || // Trees
+            (newX < 50) || (newX > 750) || // Map edges
+            (newY < 50) || (newY > 550)     // Map edges
+        );
+        
+        if (!isNearObstacle) {
+            peaceful1.setPosition(newX, newY);
         }
+    }
+    peaceful1.playAnimation('walk');
+} else {
+    peaceful1.playAnimation('idle');
+}
+
+// Same for peaceful2
+if (Math.abs(peaceful2.x - peaceful2.targetX) > 2 || Math.abs(peaceful2.y - peaceful2.targetY) > 2) {
+    const speed = 0.3;
+    const dx = peaceful2.targetX - peaceful2.x;
+    const dy = peaceful2.targetY - peaceful2.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > 0) {
+        const newX = peaceful2.x + (dx / distance) * speed;
+        const newY = peaceful2.y + (dy / distance) * speed;
+        
+        // Check for obstacles and boundaries
+        const isNearObstacle = (
+            (newX > 300 && newX < 600 && newY > 100 && newY < 300) || // Trees
+            (newX < 50) || (newX > 750) || // Map edges
+            (newY < 50) || (newY > 550)     // Map edges
+        );
+        
+        if (!isNearObstacle) {
+            peaceful2.setPosition(newX, newY);
+        }
+    }
+    peaceful2.playAnimation('walk');
+} else {
+    peaceful2.playAnimation('idle');
+}
         
         // Update all sprites
         sprites.forEach(sprite => sprite.update());
