@@ -249,8 +249,15 @@
     const darkWolf = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
     
 // Update peaceful pair starting positions
-const sheep2 = new Sprite(350, 500, 'wolf_spritesheet.png');    // White sheep more left
-const darkWolf2 = new Sprite(550, 600, 'dark_wolf_spritesheet.png');  // Black sheep lower
+const sheep2 = new Sprite(350, 500, 'wolf_spritesheet.png');
+const darkWolf2 = new Sprite(550, 600, 'dark_wolf_spritesheet.png');
+
+// Hide health bars
+sheep2.healthBarContainer.style.display = 'none';
+darkWolf2.healthBarContainer.style.display = 'none';
+
+// Add all sprites to the layer
+spriteLayer.appendChild(sheep1.element);
     
     // Add all sprites to the layer
     spriteLayer.appendChild(sheep1.element);
