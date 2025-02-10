@@ -135,6 +135,16 @@
                 this.element = document.createElement('div');
                 this.element.className = 'sprite';
                 this.element.style.backgroundImage = `url(${spritesheet})`;
+
+                updateDirection(targetX) {
+    if (targetX > this.x) {
+        this.direction = 'right';
+        this.element.style.transform = 'scaleX(1)';
+    } else {
+        this.direction = 'left';
+        this.element.style.transform = 'scaleX(-1)';
+    }
+}
                 
                 // Create health bar
                 this.healthBarContainer = document.createElement('div');
@@ -164,9 +174,9 @@
             }
 
             moveToward(targetX, targetY) {
-                const dx = targetX - this.x;
-                const dy = targetY - this.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+    const dx = targetX - this.x;
+    const dy = targetY - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 if (distance > 0) {
                     const speed = 2;
