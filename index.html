@@ -157,15 +157,14 @@ class Sprite {
     }
 
     updateDirection(targetX) {
-        if (targetX > this.x) {
-            this.direction = 'right';
-            this.element.style.transform = 'scaleX(1)';
-        } else {
-            this.direction = 'left';
-            this.element.style.transform = 'scaleX(-1)';
-        }
+    if (targetX > this.x) {
+        this.direction = 'right';
+        this.element.style.transform = 'scaleX(-1)';  // Changed this value
+    } else {
+        this.direction = 'left';
+        this.element.style.transform = 'scaleX(1)';   // Changed this value
     }
-
+}
     setPosition(x, y) {
         this.x = x;
         this.y = y;
