@@ -248,9 +248,9 @@
     const sheep1 = new Sprite(450, 400, 'wolf_spritesheet.png');
     const darkWolf = new Sprite(550, 400, 'dark_wolf_spritesheet.png');
     
-    // Peaceful pair with new positions
-    const sheep2 = new Sprite(600, 200, 'wolf_spritesheet.png');
-    const darkWolf2 = new Sprite(650, 200, 'dark_wolf_spritesheet.png');
+// Update peaceful pair starting positions
+const sheep2 = new Sprite(400, 300, 'wolf_spritesheet.png');    // Adjust these coordinates
+const darkWolf2 = new Sprite(450, 300, 'dark_wolf_spritesheet.png'); // Adjust these coordinates
     
     // Add all sprites to the layer
     spriteLayer.appendChild(sheep1.element);
@@ -327,11 +327,10 @@
                 const newY = peaceful1.y + (dy / distance) * speed;
                 
                 const isBlocked = (
-                    (newX < 50 || newX > 750) || // Map bounds
-                    (newY < 50 || newY > 450) || // Map bounds
-                    (newY < 100 && newX > 700) || // Water
-                    (newX > 250 && newX < 400 && newY < 250) // Trees
-                );
+    (newX < 350 || newX > 550) || // Keep in central area
+    (newY < 250 || newY > 350) || // Keep in central area
+    (newX > 450 && newX < 500 && newY < 300) // Avoid statues/objects
+);
                 
                 if (!isBlocked) {
                     peaceful1.setPosition(newX, newY);
