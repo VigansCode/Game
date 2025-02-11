@@ -332,18 +332,24 @@ function updateVoteDisplay() {
     // Hide health bars for peaceful pair
     sheep2.healthBarContainer.style.display = 'none';
     darkWolf2.healthBarContainer.style.display = 'none';
+
+    // Add after the peaceful pair, before adding to layer
+    const warrior = new Sprite(800, 300, 'warrior_spritesheet.png');  // Place in right side open area
+    warrior.healthBarContainer.style.display = 'none';  // No health bar for this NPC
     
     // Add all sprites to the layer
     spriteLayer.appendChild(sheep1.element);
     spriteLayer.appendChild(darkWolf.element);
     spriteLayer.appendChild(sheep2.element);
     spriteLayer.appendChild(darkWolf2.element);
+    spriteLayer.appendChild(warrior.element);
     
     // Store sprites with unique identifiers
     sprites.set('fighter_sheep', sheep1);
     sprites.set('fighter_dark', darkWolf);
     sprites.set('peaceful_sheep', sheep2);
     sprites.set('peaceful_dark', darkWolf2);
+    sprites.set('wandering_warrior', warrior);
     
     spriteLayer.style.transform = `scale(${currentZoom})`;
     
@@ -447,6 +453,43 @@ function updateVoteDisplay() {
         } else {
             peaceful2.playAnimation('idle');
         }
+
+        // Add warrior movement code
+const warrior = sprites.get('wandering_warrior');
+
+if (!warrior.nextMove || Date.now() > warrior.nextMove) {
+    let newX = Math.random() * (900 - 700) + 700;
+    let newY = Math.random() * (400 - 200) + 200;
+    
+    warrior.targetX = newX;
+    warrior.targetY = newY;
+    warrior.nextMove = Date.now() + 3000;
+}
+
+if (Math.abs(warrior.x - warrior.targetX) > 2 || Math.abs(warrior.y - warrior.targetY) > 2) {
+    const speed = 0.5;
+    const dx = warrior.targetX - warrior.x;
+    const dy = warrior.targetY - warrior.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > 0) {
+        const newX = warrior.x + (dx / distance) * speed;
+        const newY = warrior.y + (dy / distance) * speed;
+        
+        const isBlocked = (
+            (newX < 700 || newX > 900) || // Keep in right area
+            (newY < 200 || newY > 400) || // Height bounds
+            (newX > 750 && newX < 850 && newY < 300) // Avoid obstacles
+        );
+        
+        if (!isBlocked) {
+            warrior.setPosition(newX, newY);
+        }
+    }
+    warrior.playAnimation('walk');
+} else {
+    warrior.playAnimation('idle');
+}
         
         // Update all sprites
         sprites.forEach(sprite => sprite.update());
