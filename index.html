@@ -333,10 +333,15 @@ function initSprites() {
     sheep2.healthBarContainer.style.display = 'none';
     darkWolf2.healthBarContainer.style.display = 'none';
 
-    // Add warrior sprite
-    const warrior = new Sprite(800, 300, 'warrior_spritesheet.png');
-    warrior.element.style.backgroundSize = '256px 32px';  // Fix sprite sheet size
-    warrior.healthBarContainer.style.display = 'none';
+// Add warrior sprite
+const warrior = new Sprite(800, 300, 'warrior_spritesheet.png');
+warrior.element.style.backgroundSize = '32px 96px';  // Width for one frame, height for 3 frames
+warrior.animations = {
+    idle: { startFrame: 0, frames: 1 },    // Just one frame for each state
+    walk: { startFrame: 1, frames: 1 },
+    headbutt: { startFrame: 2, frames: 1 }
+};
+warrior.healthBarContainer.style.display = 'none';
     
     // Add all sprites to the layer
     spriteLayer.appendChild(sheep1.element);
