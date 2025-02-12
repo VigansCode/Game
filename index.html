@@ -23,7 +23,7 @@
     width: 32px;
     height: 32px;
     position: absolute;
-    /* REMOVE background-size property entirely */
+    background-size: 128px 128px;  /* Change this line from 768px to 128px */
     image-rendering: pixelated;
     z-index: 1000;
     border: 1px solid red;
@@ -276,14 +276,16 @@
             }
 
             playAnimation(animationName) {
-    if (this.animations[animationName] && (!this.isHeadbutting || animationName === 'headbutt')) {
-        this.currentAnimation = animationName;
-        const animation = this.animations[animationName];
-        const frameIndex = this.currentFrame % 1;  // CHANGED: Only show one frame
-        
-        this.element.style.backgroundPosition = '0 0';  // CHANGED: No animation for now
-    }
-}
+                if (this.animations[animationName] && (!this.isHeadbutting || animationName === 'headbutt')) {
+                    this.currentAnimation = animationName;
+                    const animation = this.animations[animationName];
+                    const frameIndex = animation.startFrame + (this.currentFrame % animation.frames);
+                    const col = frameIndex % 4;
+                    const row = Math.floor(frameIndex / 4);
+                    
+                    this.element.style.backgroundPosition = `-${col * 32}px -${row * 32}px`;
+                }
+            }
 
             update() {
                 this.currentFrame++;
@@ -315,7 +317,7 @@ function updateVoteDisplay() {
     buttons[0].querySelector('.vote-count').textContent = `${votes.sheep} votes`;
     buttons[1].querySelector('.vote-count').textContent = `${votes.dark} votes`;
 }
-function initSprites() {
+        function initSprites() {
     const spriteLayer = document.getElementById('spriteLayer');
     const mapCanvas = document.getElementById('mapCanvas');
     
@@ -327,27 +329,31 @@ function initSprites() {
     const sheep2 = new Sprite(350, 400, 'wolf_spritesheet.png');    
     const darkWolf2 = new Sprite(650, 200, 'dark_wolf_spritesheet.png'); 
 
-    // Add new farmer sprites
-    const femaleFarmer = new Sprite(200, 300, 'female_farmer_spritesheet.png');
-    femaleFarmer.element.style.backgroundRepeat = 'no-repeat';
-    const maleFarmer = new Sprite(700, 300, 'male_farmer_spritesheet.png');
-    maleFarmer.element.style.backgroundRepeat = 'no-repeat';
+    // Add new farmer sprites with debugging
+    const femaleFarmer = new Sprite(200, 300, './female_farmer_spritesheet.png');
+    femaleFarmer.element.style.border = '1px solid blue'; // Debug border
+    const maleFarmer = new Sprite(700, 300, './male_farmer_spritesheet.png');
+    maleFarmer.element.style.border = '1px solid green'; // Debug border
 
-    // Add ALL sprites to the layer
-    spriteLayer.appendChild(sheep1.element);
+    // Hide health bars for peaceful pair
+    sheep2.healthBarContainer.style.display = 'none';
+    darkWolf2.healthBarContainer.style.display = 'none';
+    
+// Add all sprites to the layer
+spriteLayer.appendChild(sheep1.element);
     spriteLayer.appendChild(darkWolf.element);
     spriteLayer.appendChild(sheep2.element);
     spriteLayer.appendChild(darkWolf2.element);
-    spriteLayer.appendChild(femaleFarmer.element);
-    spriteLayer.appendChild(maleFarmer.element);
+    spriteLayer.appendChild(femaleFarmer.element);   // Add this line
+    spriteLayer.appendChild(maleFarmer.element);     // Add this line
     
-    // Store ALL sprites in the map
+    // Store sprites with unique identifiers
     sprites.set('fighter_sheep', sheep1);
     sprites.set('fighter_dark', darkWolf);
     sprites.set('peaceful_sheep', sheep2);
     sprites.set('peaceful_dark', darkWolf2);
-    sprites.set('female_farmer', femaleFarmer);
-    sprites.set('male_farmer', maleFarmer);
+    sprites.set('female_farmer', femaleFarmer);      // Add this line
+    sprites.set('male_farmer', maleFarmer);          // Add this line
     
     spriteLayer.style.transform = `scale(${currentZoom})`;
     
