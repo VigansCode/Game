@@ -329,9 +329,11 @@ function updateVoteDisplay() {
     const sheep2 = new Sprite(350, 400, 'wolf_spritesheet.png');    
     const darkWolf2 = new Sprite(650, 200, 'dark_wolf_spritesheet.png'); 
 
-    // Add new farmer sprites
-    const femaleFarmer = new Sprite(200, 300, 'female_farmer_spritesheet.png');
-    const maleFarmer = new Sprite(700, 300, 'male_farmer_spritesheet.png');
+    // Add new farmer sprites with debugging
+    const femaleFarmer = new Sprite(200, 300, './female_farmer_spritesheet.png');
+    femaleFarmer.element.style.border = '1px solid blue'; // Debug border
+    const maleFarmer = new Sprite(700, 300, './male_farmer_spritesheet.png');
+    maleFarmer.element.style.border = '1px solid green'; // Debug border
 
     // Hide health bars for peaceful pair
     sheep2.healthBarContainer.style.display = 'none';
