@@ -317,7 +317,7 @@ function updateVoteDisplay() {
     buttons[0].querySelector('.vote-count').textContent = `${votes.sheep} votes`;
     buttons[1].querySelector('.vote-count').textContent = `${votes.dark} votes`;
 }
-function initSprites() {
+        function initSprites() {
     const spriteLayer = document.getElementById('spriteLayer');
     const mapCanvas = document.getElementById('mapCanvas');
     
@@ -332,33 +332,18 @@ function initSprites() {
     // Hide health bars for peaceful pair
     sheep2.healthBarContainer.style.display = 'none';
     darkWolf2.healthBarContainer.style.display = 'none';
-
-// Add warrior sprite
-const warrior = new Sprite(800, 300, 'warrior_spritesheet.png');
-warrior.element.style.cssText = `
-    width: 32px;
-    height: 32px;
-    background-size: 256px 64px;    // Full sprite sheet size
-    background-position: 0 0;       // Just first frame
-    image-rendering: pixelated;
-    clip-path: inset(0 0 0 0);     // Clip to show only one character
-`;
-warrior.animations = null;  // Disable animations completely
-warrior.healthBarContainer.style.display = 'none';
     
     // Add all sprites to the layer
     spriteLayer.appendChild(sheep1.element);
     spriteLayer.appendChild(darkWolf.element);
     spriteLayer.appendChild(sheep2.element);
     spriteLayer.appendChild(darkWolf2.element);
-    spriteLayer.appendChild(warrior.element);
     
     // Store sprites with unique identifiers
     sprites.set('fighter_sheep', sheep1);
     sprites.set('fighter_dark', darkWolf);
     sprites.set('peaceful_sheep', sheep2);
     sprites.set('peaceful_dark', darkWolf2);
-    sprites.set('wandering_warrior', warrior);
     
     spriteLayer.style.transform = `scale(${currentZoom})`;
     
@@ -423,15 +408,15 @@ warrior.healthBarContainer.style.display = 'none';
                 const newY = peaceful1.y + (dy / distance) * speed;
                 
                 const isBlocked = (
-                    (newX < 300 || newX > 700) || // Wider area
-                    (newY < 150 || newY > 450) || // Height bounds
-                    (newX > 300 && newX < 400 && newY < 300) // Trees/obstacles
-                );
+        (newX < 300 || newX > 700) || // Wider area
+        (newY < 150 || newY > 450) || // Height bounds
+        (newX > 300 && newX < 400 && newY < 300) // Trees/obstacles
+    );
                 
-                if (!isBlocked) {
-                    peaceful1.setPosition(newX, newY);
-                }
-            }
+    if (!isBlocked) {
+        peaceful1.setPosition(newX, newY);
+    }
+}
             peaceful1.playAnimation('walk');
         } else {
             peaceful1.playAnimation('idle');
@@ -462,47 +447,12 @@ warrior.healthBarContainer.style.display = 'none';
         } else {
             peaceful2.playAnimation('idle');
         }
-
-        // Warrior movement
-        const warrior = sprites.get('wandering_warrior');
-        if (!warrior.nextMove || Date.now() > warrior.nextMove) {
-            let newX = Math.random() * (900 - 700) + 700;
-            let newY = Math.random() * (400 - 200) + 200;
-            
-            warrior.targetX = newX;
-            warrior.targetY = newY;
-            warrior.nextMove = Date.now() + 3000;
-        }
-
-        if (Math.abs(warrior.x - warrior.targetX) > 2 || Math.abs(warrior.y - warrior.targetY) > 2) {
-            const speed = 0.5;
-            const dx = warrior.targetX - warrior.x;
-            const dy = warrior.targetY - warrior.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance > 0) {
-                const newX = warrior.x + (dx / distance) * speed;
-                const newY = warrior.y + (dy / distance) * speed;
-                
-                const isBlocked = (
-                    (newX < 700 || newX > 900) || // Keep in right area
-                    (newY < 200 || newY > 400) || // Height bounds
-                    (newX > 750 && newX < 850 && newY < 300) // Avoid any obstacles
-                );
-                
-                if (!isBlocked) {
-                    warrior.setPosition(newX, newY);
-                }
-            }
-            warrior.playAnimation('walk');
-        } else {
-            warrior.playAnimation('idle');
-        }
         
         // Update all sprites
         sprites.forEach(sprite => sprite.update());
     }, 50);
 }
+
         function handleMouseDown(e) {
             isDragging = true;
             const container = document.getElementById('gameContainer');
