@@ -23,7 +23,7 @@
     width: 32px;
     height: 32px;
     position: absolute;
-    background-size: 128px 128px;  /* Change this line from 768px to 128px */
+    background-size: 32px 256px;  /* CHANGED: now shows one column of 8 frames */
     image-rendering: pixelated;
     z-index: 1000;
     border: 1px solid red;
@@ -280,8 +280,8 @@
                     this.currentAnimation = animationName;
                     const animation = this.animations[animationName];
                     const frameIndex = animation.startFrame + (this.currentFrame % animation.frames);
-                    const col = frameIndex % 4;
-                    const row = Math.floor(frameIndex / 4);
+                    const col = 0;                // CHANGED: only one column
+                    const row = frameIndex % 8;   // CHANGED: 8 frames vertically
                     
                     this.element.style.backgroundPosition = `-${col * 32}px -${row * 32}px`;
                 }
