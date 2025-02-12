@@ -23,7 +23,7 @@
     width: 32px;
     height: 32px;
     position: absolute;
-    background-size: 32px 256px;  /* CHANGED: now shows one column of 8 frames */
+    background-size: 32px 32px;  /* CHANGED: Show only one 32x32 frame */
     image-rendering: pixelated;
     z-index: 1000;
     border: 1px solid red;
@@ -276,16 +276,14 @@
             }
 
             playAnimation(animationName) {
-                if (this.animations[animationName] && (!this.isHeadbutting || animationName === 'headbutt')) {
-                    this.currentAnimation = animationName;
-                    const animation = this.animations[animationName];
-                    const frameIndex = animation.startFrame + (this.currentFrame % animation.frames);
-                    const col = 0;                // CHANGED: only one column
-                    const row = frameIndex % 8;   // CHANGED: 8 frames vertically
-                    
-                    this.element.style.backgroundPosition = `-${col * 32}px -${row * 32}px`;
-                }
-            }
+    if (this.animations[animationName] && (!this.isHeadbutting || animationName === 'headbutt')) {
+        this.currentAnimation = animationName;
+        const animation = this.animations[animationName];
+        const frameIndex = this.currentFrame % 1;  // CHANGED: Only show one frame
+        
+        this.element.style.backgroundPosition = '0 0';  // CHANGED: No animation for now
+    }
+}
 
             update() {
                 this.currentFrame++;
