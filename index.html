@@ -20,10 +20,10 @@
             transition: transform 0.1s;
         }
         .sprite {
-    width: 32px;
-    height: 32px;
+    width: 32px;          /* Keep single sprite width */
+    height: 32px;         /* Keep single sprite height */
     position: absolute;
-    background-size: 32px 32px;  /* CHANGED: Show only one 32x32 frame */
+    background-size: 32px 32px;  /* CRITICAL CHANGE: This makes it show just one frame */
     image-rendering: pixelated;
     z-index: 1000;
     border: 1px solid red;
@@ -328,10 +328,12 @@ function updateVoteDisplay() {
     const darkWolf2 = new Sprite(650, 200, 'dark_wolf_spritesheet.png'); 
 
     // Add new farmer sprites with debugging
-    const femaleFarmer = new Sprite(200, 300, './female_farmer_spritesheet.png');
-    femaleFarmer.element.style.border = '1px solid blue'; // Debug border
-    const maleFarmer = new Sprite(700, 300, './male_farmer_spritesheet.png');
-    maleFarmer.element.style.border = '1px solid green'; // Debug border
+// Add new farmer sprites
+const femaleFarmer = new Sprite(200, 300, 'female_farmer_spritesheet.png');
+femaleFarmer.element.style.backgroundPosition = '0 0';  // Show only first frame
+
+const maleFarmer = new Sprite(700, 300, 'male_farmer_spritesheet.png');
+maleFarmer.element.style.backgroundPosition = '0 0';  // Show only first frame
 
     // Hide health bars for peaceful pair
     sheep2.healthBarContainer.style.display = 'none';
