@@ -23,11 +23,15 @@
     width: 32px;
     height: 32px;
     position: absolute;
-    background-size: 128px 128px;  /* Change this line from 768px to 128px */
+    background-size: 32px 32px;  /* This ensures one sprite per box */
     image-rendering: pixelated;
     z-index: 1000;
-    border: 1px solid red;
     transform-origin: top left;
+}
+
+/* Optional: If you want to keep the debug borders */
+.sprite.debug {
+    border: 1px solid red;
 }
         .health-bar {
             position: absolute;
