@@ -23,15 +23,10 @@
     width: 32px;
     height: 32px;
     position: absolute;
-    background-size: 96px 96px;  /* Adjusted to match 3x3 grid of frames */
+    background-size: 128px 32px;  /* This matches 4 frames horizontally */
     image-rendering: pixelated;
     z-index: 1000;
     transform-origin: top left;
-}
-
-/* Optional: If you want to keep the debug borders */
-.sprite.debug {
-    border: 1px solid red;
 }
         .health-bar {
             position: absolute;
@@ -212,9 +207,9 @@
                 this.element.appendChild(this.healthBarContainer);
                 
                 this.animations = {
-    idle: { startFrame: 0, frames: 4 },
-    walk: { startFrame: 4, frames: 4 },
-    headbutt: { startFrame: 8, frames: 4 }
+    idle: { startFrame: 0, frames: 1 },
+    walk: { startFrame: 1, frames: 1 },
+    headbutt: { startFrame: 2, frames: 1 }
 };
                 
                 this.currentFrame = 0;
