@@ -20,10 +20,10 @@
             transition: transform 0.1s;
         }
         .sprite {
-    width: 32px;          /* Keep single sprite width */
-    height: 32px;         /* Keep single sprite height */
+    width: 32px;
+    height: 32px;
     position: absolute;
-    background-size: 32px 32px;  /* CRITICAL CHANGE: This makes it show just one frame */
+    /* REMOVE background-size property entirely */
     image-rendering: pixelated;
     z-index: 1000;
     border: 1px solid red;
@@ -327,13 +327,12 @@ function updateVoteDisplay() {
     const sheep2 = new Sprite(350, 400, 'wolf_spritesheet.png');    
     const darkWolf2 = new Sprite(650, 200, 'dark_wolf_spritesheet.png'); 
 
-    // Add new farmer sprites with debugging
-// Add new farmer sprites
+// In your initSprites() function where you create the farmers:
 const femaleFarmer = new Sprite(200, 300, 'female_farmer_spritesheet.png');
-femaleFarmer.element.style.backgroundPosition = '0 0';  // Show only first frame
+femaleFarmer.element.style.backgroundRepeat = 'no-repeat';  // ADD THIS LINE
 
 const maleFarmer = new Sprite(700, 300, 'male_farmer_spritesheet.png');
-maleFarmer.element.style.backgroundPosition = '0 0';  // Show only first frame
+maleFarmer.element.style.backgroundRepeat = 'no-repeat';  // ADD THIS LINE
 
     // Hide health bars for peaceful pair
     sheep2.healthBarContainer.style.display = 'none';
