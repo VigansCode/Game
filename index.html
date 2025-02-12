@@ -335,11 +335,11 @@ function initSprites() {
 
 // Add warrior sprite
 const warrior = new Sprite(800, 300, 'warrior_spritesheet.png');
-warrior.element.style.backgroundSize = '32px 96px';  // Width for one frame, height for 3 frames
+warrior.element.style.backgroundSize = '256px 32px';  // 8 frames * 32px width, 1 row * 32px height
 warrior.animations = {
-    idle: { startFrame: 0, frames: 1 },    // Just one frame for each state
-    walk: { startFrame: 1, frames: 1 },
-    headbutt: { startFrame: 2, frames: 1 }
+    idle: { startFrame: 0, frames: 2 },    // First 2 frames for idle
+    walk: { startFrame: 2, frames: 4 },    // Next 4 frames for walking
+    headbutt: { startFrame: 6, frames: 2 }  // Last 2 frames for action
 };
 warrior.healthBarContainer.style.display = 'none';
     
