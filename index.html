@@ -23,9 +23,10 @@
     width: 32px;
     height: 32px;
     position: absolute;
-    background-size: 128px 32px;  /* This matches 4 frames horizontally */
+    background-size: 128px 128px;  /* Change this line from 768px to 128px */
     image-rendering: pixelated;
     z-index: 1000;
+    border: 1px solid red;
     transform-origin: top left;
 }
         .health-bar {
@@ -207,10 +208,10 @@
                 this.element.appendChild(this.healthBarContainer);
                 
                 this.animations = {
-    idle: { startFrame: 0, frames: 1 },
-    walk: { startFrame: 1, frames: 1 },
-    headbutt: { startFrame: 2, frames: 1 }
-};
+                    idle: { startFrame: 0, frames: 4 },
+                    walk: { startFrame: 4, frames: 4 },
+                    headbutt: { startFrame: 8, frames: 4 }
+                };
                 
                 this.currentFrame = 0;
                 this.currentAnimation = 'idle';
