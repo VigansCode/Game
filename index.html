@@ -335,15 +335,14 @@ function initSprites() {
 
 // Add warrior sprite
 const warrior = new Sprite(800, 300, 'warrior_spritesheet.png');
-warrior.element.style.width = '16px';  // Single sprite width
-warrior.element.style.height = '16px';  // Single sprite height
-warrior.element.style.backgroundSize = '16px 16px';  // Size of ONE character only
-warrior.element.style.backgroundPosition = '0 0';  // Start at first frame
+warrior.element.style.width = '16px';        // Width of ONE character
+warrior.element.style.height = '16px';       // Height of ONE character
+warrior.element.style.overflow = 'hidden';   // Hide any overflow
+warrior.element.style.backgroundSize = '128px 32px';  // Total sprite sheet size
+warrior.element.style.backgroundPosition = '0 0';     // Show just first frame
 warrior.element.style.imageRendering = 'pixelated';
 warrior.animations = {
-    idle: { startFrame: 0, frames: 1 },    // Single frame
-    walk: { startFrame: 0, frames: 1 },    // Single frame
-    headbutt: { startFrame: 0, frames: 1 }  // Single frame
+    idle: { startFrame: 0, frames: 0 }     // No animation, just show first frame
 };
 warrior.healthBarContainer.style.display = 'none';
     
