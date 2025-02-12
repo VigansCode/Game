@@ -315,7 +315,7 @@ function updateVoteDisplay() {
     buttons[0].querySelector('.vote-count').textContent = `${votes.sheep} votes`;
     buttons[1].querySelector('.vote-count').textContent = `${votes.dark} votes`;
 }
-        function initSprites() {
+function initSprites() {
     const spriteLayer = document.getElementById('spriteLayer');
     const mapCanvas = document.getElementById('mapCanvas');
     
@@ -327,32 +327,27 @@ function updateVoteDisplay() {
     const sheep2 = new Sprite(350, 400, 'wolf_spritesheet.png');    
     const darkWolf2 = new Sprite(650, 200, 'dark_wolf_spritesheet.png'); 
 
-// In your initSprites() function where you create the farmers:
-const femaleFarmer = new Sprite(200, 300, 'female_farmer_spritesheet.png');
-femaleFarmer.element.style.backgroundRepeat = 'no-repeat';  // ADD THIS LINE
+    // Add new farmer sprites
+    const femaleFarmer = new Sprite(200, 300, 'female_farmer_spritesheet.png');
+    femaleFarmer.element.style.backgroundRepeat = 'no-repeat';
+    const maleFarmer = new Sprite(700, 300, 'male_farmer_spritesheet.png');
+    maleFarmer.element.style.backgroundRepeat = 'no-repeat';
 
-const maleFarmer = new Sprite(700, 300, 'male_farmer_spritesheet.png');
-maleFarmer.element.style.backgroundRepeat = 'no-repeat';  // ADD THIS LINE
-
-    // Hide health bars for peaceful pair
-    sheep2.healthBarContainer.style.display = 'none';
-    darkWolf2.healthBarContainer.style.display = 'none';
-    
-// Add all sprites to the layer
-spriteLayer.appendChild(sheep1.element);
+    // Add ALL sprites to the layer
+    spriteLayer.appendChild(sheep1.element);
     spriteLayer.appendChild(darkWolf.element);
     spriteLayer.appendChild(sheep2.element);
     spriteLayer.appendChild(darkWolf2.element);
-    spriteLayer.appendChild(femaleFarmer.element);   // Add this line
-    spriteLayer.appendChild(maleFarmer.element);     // Add this line
+    spriteLayer.appendChild(femaleFarmer.element);
+    spriteLayer.appendChild(maleFarmer.element);
     
-    // Store sprites with unique identifiers
+    // Store ALL sprites in the map
     sprites.set('fighter_sheep', sheep1);
     sprites.set('fighter_dark', darkWolf);
     sprites.set('peaceful_sheep', sheep2);
     sprites.set('peaceful_dark', darkWolf2);
-    sprites.set('female_farmer', femaleFarmer);      // Add this line
-    sprites.set('male_farmer', maleFarmer);          // Add this line
+    sprites.set('female_farmer', femaleFarmer);
+    sprites.set('male_farmer', maleFarmer);
     
     spriteLayer.style.transform = `scale(${currentZoom})`;
     
